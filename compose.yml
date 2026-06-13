@@ -1,0 +1,22 @@
+services:
+
+  cms:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www
+      - ./docker/cms.conf:/etc/apache2/sites-enabled/000-default.conf
+
+  preview:
+    build: .
+    ports:
+      - "8081:80"
+    volumes:
+      - .:/var/www
+      - ./docker/preview.conf:/etc/apache2/sites-enabled/000-default.conf
+
+  # watcher:   dart-sass + WebSocket live-reload — kommt wenn bp static steht
+  #   build: ./docker/watcher
+  #   volumes:
+  #     - .:/var/www

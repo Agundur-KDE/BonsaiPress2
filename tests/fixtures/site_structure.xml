@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+    <page id="1" title="Eternal Lands" location="index" titledesc="A page about EL" root="true" content_type="standard_html">
+        <addon addon="bs4_6menu" placeholder="MAINMENU"/>
+        <addon addon="inlinejs" placeholder="INLINEJS">
+            <config>
+                <scripts>main</scripts>
+            </config>
+        </addon>
+        <addon>canonical::CANONICAL::https</addon>
+        <addon>bs4breadcrumb::BREADCRUMB</addon>
+    </page>
+    <page id="10" title="Dailies" location="dailies" titledesc="Daily quests" content_type="standard_html">
+        <addon addon="bs4_6menu" placeholder="MAINMENU"/>
+        <page id="11" title="Haidir" location="haidir" titledesc="Haidir quests" content_type="standard_html"/>
+        <page id="12" title="Daritha" location="daritha" titledesc="Daritha quests" content_type="standard_html"/>
+    </page>
+    <page id="2" title="Pear Leaderboard" location="pearfinds" titledesc="Top Pear Finders" content_type="standard_html">
+        <addon addon="bs4_6menu" placeholder="MAINMENU"/>
+        <addon>canonical::CANONICAL::https</addon>
+    </page>
+    <page id="20" title="Archive" location="archive" force_children="true" content_type="standard_html"/>
+</site>
