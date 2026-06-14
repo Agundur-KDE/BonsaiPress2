@@ -2,3 +2,5 @@
 /current/
 /.env
 .phpunit.result.cache
+.idea/
+
