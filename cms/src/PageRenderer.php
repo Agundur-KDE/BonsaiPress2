@@ -11,7 +11,7 @@ class PageRenderer
 
     public function __construct(
         private Config $config,
-        string $basePath,
+        private string $basePath,
     ) {
         $lang = $config->defaultLang();
         $this->contentPath  = $basePath . '/current/config/' . $lang;
@@ -45,6 +45,8 @@ class PageRenderer
         $tpl->assign('META',     $content->fetch('Meta'));
         $tpl->assign('SCHEMAORG', $content->fetch('Json'));
 
+        $this->processAddons($page, $tpl, $mode);
+
         return $tpl->fetch('Prolog')
              . $tpl->fetch('Head')
              . $tpl->fetch('Body1')
@@ -72,6 +74,40 @@ class PageRenderer
         $tpl->read($this->templatePath . '/' . $head);
         $tpl->read($this->templatePath . '/' . $main);
         return $tpl;
+    }
+
+    private function processAddons(Page $page, Section $tpl, string $mode): void
+    {
+        $template_path = $this->templatePath;
+        $page_id       = $page->id;
+        $pathMap       = (new XmlPageRepository(
+            $this->contentPath . '/site_structure.xml'
+        ))->getPathMap();
+
+        foreach ($page->addons as $addon) {
+            $addonFile = $this->resolveAddon($addon->name);
+            if ($addonFile === null) {
+                continue;
+            }
+            $addonconfig = (object) $addon->config;
+            $modus       = $mode;
+            $addoncontent = '';
+            require $addonFile;
+            $tpl->assign($addon->placeholder, $addoncontent);
+        }
+    }
+
+    private function resolveAddon(string $name): ?string
+    {
+        $client = $this->basePath . '/current/config/addons/' . $name . '.php';
+        if (file_exists($client)) {
+            return $client;
+        }
+        $global = $this->basePath . '/cms/addons/' . $name . '.php';
+        if (file_exists($global)) {
+            return $global;
+        }
+        return null;
     }
 
     private function loadContent(int $pageId): Section
