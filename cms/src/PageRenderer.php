@@ -89,8 +89,9 @@ class PageRenderer
             if ($addonFile === null) {
                 continue;
             }
-            $addonconfig = (object) $addon->config;
-            $modus       = $mode;
+            $addonconfig  = (object) $addon->config;
+            $addonparams  = $addon->config;
+            $modus        = $mode;
             $addoncontent = '';
             require $addonFile;
             $tpl->assign($addon->placeholder, $addoncontent);
