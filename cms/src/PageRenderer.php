@@ -38,6 +38,7 @@ class PageRenderer
         $tpl->add('ENDSCRIPTS', $pageConfig->fetch('js_bottom'));
         if ($mode === 'dynamic') {
             $tpl->add('ENDSCRIPTS', $pageConfig->fetch('js_bottom_dynamic'));
+            $tpl->add('ENDSCRIPTS', '<script src="/js/reload_client.js"></script>');
         }
 
         $content = $this->loadContent($page->id);
