@@ -18,8 +18,14 @@ class PageRenderer
         $this->templatePath = $this->contentPath . '/templates';
     }
 
-    public function render(Page $page, string $mode = 'dynamic'): string
+    public function render(Page $page, string $mode = 'dynamic', array $pathMap = []): string
     {
+        if (empty($pathMap)) {
+            $pathMap = (new XmlPageRepository(
+                $this->contentPath . '/site_structure.xml'
+            ))->getPathMap();
+        }
+
         $pageConfig = $this->loadPageConfig($page->id);
         $tpl        = $this->loadTemplate($pageConfig);
 
@@ -46,7 +52,7 @@ class PageRenderer
         $tpl->assign('META',     $content->fetch('Meta'));
         $tpl->assign('SCHEMAORG', $content->fetch('Json'));
 
-        $this->processAddons($page, $tpl, $mode);
+        $this->processAddons($page, $tpl, $mode, $pathMap);
 
         return $tpl->fetch('Prolog')
              . $tpl->fetch('Head')
@@ -77,13 +83,10 @@ class PageRenderer
         return $tpl;
     }
 
-    private function processAddons(Page $page, Section $tpl, string $mode): void
+    private function processAddons(Page $page, Section $tpl, string $mode, array $pathMap): void
     {
         $template_path = $this->templatePath;
         $page_id       = $page->id;
-        $pathMap       = (new XmlPageRepository(
-            $this->contentPath . '/site_structure.xml'
-        ))->getPathMap();
 
         foreach ($page->addons as $addon) {
             $addonFile = $this->resolveAddon($addon->name);

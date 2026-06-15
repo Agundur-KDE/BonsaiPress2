@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use BonsaiPress\Command\StaticCommand;
+use Symfony\Component\Console\Application;
+
+$app = new Application('BonsaiPress', '2.0');
+$app->add(new StaticCommand());
+$app->run();

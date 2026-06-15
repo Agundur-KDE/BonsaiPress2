@@ -10,6 +10,7 @@ use BonsaiPress\XmlPageRepository;
 
 $repo = new XmlPageRepository(dirname($template_path) . '/site_structure.xml');
 
+if (!function_exists('breadcrumbAncestors')) :
 function breadcrumbAncestors(array $pages, int $targetId, array $path = []): array
 {
     foreach ($pages as $page) {
@@ -24,6 +25,7 @@ function breadcrumbAncestors(array $pages, int $targetId, array $path = []): arr
     }
     return [];
 }
+endif;
 
 $ancestors = breadcrumbAncestors($repo->getTree(), $page_id);
 $current   = $repo->findById($page_id);

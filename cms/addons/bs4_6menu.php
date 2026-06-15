@@ -50,6 +50,7 @@ $addontemplate->read($template_path . '/bs4_6menu.html');
 $ancestors = [];
 $repo      = new XmlPageRepository(dirname($template_path) . '/site_structure.xml');
 
+if (!function_exists('BonsaiPress\Addons\Bs4_6menu\findAncestors')) :
 function findAncestors(array $pages, int $targetId, array $path = []): array
 {
     foreach ($pages as $p) {
@@ -64,6 +65,7 @@ function findAncestors(array $pages, int $targetId, array $path = []): array
     }
     return [];
 }
+endif;
 
 $ancestors = findAncestors($repo->getTree(), $page_id);
 
