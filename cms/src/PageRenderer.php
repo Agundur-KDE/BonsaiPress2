@@ -27,6 +27,9 @@ class PageRenderer
         $tpl->assign('DEFAULTCSS', $this->config->defaultCss());
         $tpl->assign('_RESOURCES', $this->config->pathToResources() . '/');
 
+        $pageConfig->assign('_RESOURCES', $this->config->pathToResources() . '/');
+        $pageConfig->assign('DEFAULTCSS', $this->config->defaultCss());
+
         $tpl->add('CSS', $pageConfig->fetch('css'));
         if ($mode === 'dynamic') {
             $tpl->add('CSS', $pageConfig->fetch('css_dynamic'));
