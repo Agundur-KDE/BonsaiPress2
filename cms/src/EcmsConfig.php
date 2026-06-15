@@ -45,4 +45,24 @@ class EcmsConfig implements Config
     {
         return \ECMS_CONFIG::$domain;
     }
+
+    public function defaultHeadTemplate(): string
+    {
+        return \ECMS_CONFIG::$default_head_template;
+    }
+
+    public function defaultMainTemplate(): string
+    {
+        return \ECMS_CONFIG::$default_main_template;
+    }
+
+    public function defaultCss(): string
+    {
+        return \ECMS_CONFIG::$default_css;
+    }
+
+    public function pathToResources(): string
+    {
+        return \ECMS_CONFIG::$path_to_resources;
+    }
 }

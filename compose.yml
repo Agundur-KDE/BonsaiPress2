@@ -16,7 +16,9 @@ services:
       - .:/var/www
       - ./docker/preview.conf:/etc/apache2/sites-enabled/000-default.conf
 
-  # watcher:   dart-sass + WebSocket live-reload — kommt wenn bp static steht
-  #   build: ./docker/watcher
-  #   volumes:
-  #     - .:/var/www
+  watcher:
+    build: ./docker/watcher
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/var/www

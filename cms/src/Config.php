@@ -12,4 +12,12 @@ interface Config
     public function allowedLanguages(): array;
 
     public function domain(): string;
+
+    public function defaultHeadTemplate(): string;
+
+    public function defaultMainTemplate(): string;
+
+    public function defaultCss(): string;
+
+    public function pathToResources(): string;
 }
