@@ -93,8 +93,8 @@ class StaticExporter
 
     private function rewriteLinks(string $html, array $pathMap): string
     {
-        // matches both /?site=X and /ecms/index.php?site=X (legacy)
-        preg_match_all('~(?:/ecms/index\.php)?\?site=([0-9]+)~', $html, $matches);
+        // matches /?site=X, ?site=X, /ecms/index.php?site=X (legacy)
+        preg_match_all('~(?:/ecms/index\.php)?/?\?site=([0-9]+)~', $html, $matches);
 
         if (empty($matches[1])) {
             return $html;
