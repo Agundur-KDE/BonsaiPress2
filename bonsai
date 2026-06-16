@@ -280,7 +280,7 @@ switch_cmd() {
         rm -rf "$SCRIPT_DIR/current"
     fi
 
-    ln -sfn "$client_dir" "$SCRIPT_DIR/current"
+    ln -sfn "clients/$name" "$SCRIPT_DIR/current"
     _set_active "$name"
 
     _restart_if_running
