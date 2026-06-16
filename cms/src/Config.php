@@ -20,4 +20,6 @@ interface Config
     public function defaultCss(): string;
 
     public function pathToResources(): string;
+
+    public function baseUrl(): string;
 }

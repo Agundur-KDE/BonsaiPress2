@@ -20,6 +20,7 @@ class Page
         public readonly string $path = '',
         public readonly array  $children = [],
         public readonly array  $addons = [],
+        public readonly bool   $notInSitemap = false,
     ) {}
 
 }

@@ -65,4 +65,14 @@ class EcmsConfig implements Config
     {
         return \ECMS_CONFIG::$path_to_resources;
     }
+
+    public function baseUrl(): string
+    {
+        $url = \ECMS_CONFIG::$proto . '://';
+        if (!empty(\ECMS_CONFIG::$subdomain)) {
+            $url .= \ECMS_CONFIG::$subdomain . '.';
+        }
+        $url .= \ECMS_CONFIG::$domain;
+        return rtrim($url, '/');
+    }
 }

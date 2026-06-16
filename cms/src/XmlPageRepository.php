@@ -77,15 +77,16 @@ class XmlPageRepository implements PageRepository
         $children = $this->parseLevel($node, $childParentPath);
 
         return new Page(
-            id:          $id,
-            title:       (string)$attrs->title,
-            location:    $location,
-            contentType: (string)($attrs->content_type ?? ''),
-            titleDesc:   (string)($attrs->titledesc ?? ''),
-            isRoot:      $isRoot,
-            path:        $path,
-            children:    $children,
-            addons:      $this->parseAddons($node),
+            id:           $id,
+            title:        (string)$attrs->title,
+            location:     $location,
+            contentType:  (string)($attrs->content_type ?? ''),
+            titleDesc:    (string)($attrs->titledesc ?? ''),
+            isRoot:       $isRoot,
+            path:         $path,
+            children:     $children,
+            addons:       $this->parseAddons($node),
+            notInSitemap: isset($attrs->not_in_sitemap),
         );
     }
 

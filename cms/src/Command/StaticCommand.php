@@ -30,7 +30,7 @@ class StaticCommand extends Command
 
         $repo     = new XmlPageRepository($xmlPath);
         $renderer = new PageRenderer($config, $basePath);
-        $exporter = new StaticExporter($renderer, $repo, $basePath);
+        $exporter = new StaticExporter($renderer, $repo, $basePath, $config->baseUrl());
 
         $output->writeln('Starte statischen Export...');
 
@@ -38,6 +38,7 @@ class StaticCommand extends Command
             $output->writeln('  ✓ ' . $title . ' → ' . str_replace($basePath, '', $path));
         }
 
+        $output->writeln('  ✓ sitemap.xml');
         $output->writeln('<info>Fertig.</info>');
         return Command::SUCCESS;
     }

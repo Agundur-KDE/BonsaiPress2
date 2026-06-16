@@ -12,6 +12,7 @@ class StaticExporter
         private PageRenderer $renderer,
         private PageRepository $repo,
         string $basePath,
+        private string $baseUrl = '',
     ) {
         $this->staticDir = $basePath . '/current/static';
     }
@@ -20,7 +21,8 @@ class StaticExporter
     {
         $this->cleanStatic();
 
-        $pathMap = $this->repo->getPathMap();
+        $pathMap  = $this->repo->getPathMap();
+        $sitemap  = [];
 
         $pages = new \RecursiveIteratorIterator(
             new PageTreeIterator($this->repo->getTree()),
@@ -31,11 +33,45 @@ class StaticExporter
             $html = $this->renderer->render($page, 'static', $pathMap);
             $html = $this->rewriteLinks($html, $pathMap);
 
-            $filePath = $this->resolveFilePath($pathMap[$page->id] ?? '/');
+            $path     = $pathMap[$page->id] ?? '/';
+            $filePath = $this->resolveFilePath($path);
             $this->writeFile($filePath, $html);
+
+            if (!$page->notInSitemap) {
+                $sitemap[] = $path;
+            }
 
             yield $page->title => $filePath;
         }
+
+        if (!empty($this->baseUrl)) {
+            $this->writeSitemap($sitemap);
+        }
+    }
+
+    private function writeSitemap(array $paths): void
+    {
+        $xml = new \SimpleXMLElement(
+            '<?xml version="1.0" encoding="UTF-8"?><urlset/>'
+        );
+        $xml->addAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        $xml->addAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance', 'http://www.w3.org/2001/XMLSchema-instance');
+        $xml->addAttribute(
+            'xsi:schemaLocation',
+            'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd',
+            'http://www.w3.org/2001/XMLSchema-instance'
+        );
+
+        foreach ($paths as $path) {
+            $loc = $this->baseUrl . (str_ends_with($path, '/') ? $path : $path . '.html');
+            $url = $xml->addChild('url');
+            $url->addChild('loc', htmlspecialchars($loc, ENT_XML1));
+            $url->addChild('changefreq', 'weekly');
+        }
+
+        $dom = dom_import_simplexml($xml)->ownerDocument;
+        $dom->formatOutput = true;
+        file_put_contents($this->staticDir . '/sitemap.xml', $dom->saveXML(), LOCK_EX);
     }
 
     private function resolveFilePath(string $path): string
@@ -108,7 +144,7 @@ class StaticExporter
             if (is_dir($path)) {
                 $this->cleanDir($path);
                 @rmdir($path);
-            } elseif (str_ends_with($item, '.html')) {
+            } elseif (str_ends_with($item, '.html') || $item === 'sitemap.xml') {
                 unlink($path);
             }
         }
