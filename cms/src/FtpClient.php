@@ -12,7 +12,7 @@ class FtpClient
     {
         $conn = false;
 
-        if ($ssl) {
+        if ($ssl && function_exists('ftp_ssl_connect')) {
             $conn = @ftp_ssl_connect($host, $port, $timeout);
         }
 

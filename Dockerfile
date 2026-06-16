@@ -2,6 +2,9 @@ FROM php:8.4-apache
 
 RUN a2enmod rewrite && rm -rf /var/www/html
 
+RUN docker-php-ext-configure ftp --with-openssl-dir=/usr \
+ && docker-php-ext-install ftp
+
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/public|g' \
     /etc/apache2/sites-available/000-default.conf
 
