@@ -1,5 +1,6 @@
 /vendor/
 /current/
+/clients/
 /.env
 .phpunit.result.cache
 .idea/
