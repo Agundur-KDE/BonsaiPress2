@@ -6,96 +6,117 @@ namespace BonsaiPress;
 
 class FtpClient
 {
-    private \FTP\Connection $conn;
+    private string $baseUrl;
+    private string $userPwd = '';
+    private bool $usePassive = true;
+    private int $sslMode;
 
     public function __construct(string $host, bool $ssl = true, int $port = 21, int $timeout = 10)
     {
-        $conn = false;
-
-        if ($ssl && function_exists('ftp_ssl_connect')) {
-            $conn = @ftp_ssl_connect($host, $port, $timeout);
-        }
-
-        if ($conn === false) {
-            $conn = @ftp_connect($host, $port, $timeout);
-        }
-
-        if ($conn === false) {
-            throw new \RuntimeException("FTP: cannot connect to $host");
-        }
-
-        $this->conn = $conn;
+        $this->baseUrl = 'ftp://' . $host . ':' . $port;
+        // CURLFTPSSL_ALL = explicit TLS (AUTH TLS on port 21), CURLFTPSSL_NONE = plain FTP
+        $this->sslMode = $ssl ? CURLFTPSSL_ALL : CURLFTPSSL_NONE;
     }
 
     public function login(string $user, string $pass): void
     {
-        if (!@ftp_login($this->conn, $user, $pass)) {
-            throw new \RuntimeException("FTP: login failed for user $user");
+        $this->userPwd = $user . ':' . $pass;
+
+        // Verify credentials with a NOOP command
+        $ch = $this->init($this->baseUrl . '/');
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err !== '') {
+            throw new \RuntimeException("FTP: login failed for user $user: $err");
         }
     }
 
     public function passive(bool $mode = true): void
     {
-        ftp_pasv($this->conn, $mode);
+        $this->usePassive = $mode;
     }
 
     public function upload(string $remotePath, string $localPath): void
     {
-        $this->mkdirs($remotePath);
-        if (!ftp_put($this->conn, $remotePath, $localPath, FTP_BINARY)) {
-            throw new \RuntimeException("FTP: upload failed: $remotePath");
+        $fp = fopen($localPath, 'rb');
+        if ($fp === false) {
+            throw new \RuntimeException("FTP: cannot open local file: $localPath");
         }
+        $size = filesize($localPath);
+
+        $ch = $this->init($this->baseUrl . $remotePath);
+        curl_setopt($ch, CURLOPT_UPLOAD, true);
+        curl_setopt($ch, CURLOPT_INFILE, $fp);
+        curl_setopt($ch, CURLOPT_INFILESIZE, $size !== false ? $size : -1);
+        curl_setopt($ch, CURLOPT_FTP_CREATE_MISSING_DIRS, CURLFTP_CREATE_DIR);
+
+        $this->exec($ch, "upload failed: $remotePath");
+        fclose($fp);
     }
 
     public function delete(string $remotePath): void
     {
-        if (!@ftp_delete($this->conn, $remotePath)) {
-            throw new \RuntimeException("FTP: delete failed: $remotePath");
-        }
+        $dir  = dirname($remotePath);
+        $file = basename($remotePath);
+
+        $ch = $this->init($this->baseUrl . rtrim($dir, '/') . '/');
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_setopt($ch, CURLOPT_QUOTE, ['DELE ' . $remotePath]);
+
+        $this->exec($ch, "delete failed: $remotePath");
     }
 
     /** Returns file content from remote path. */
     public function get(string $remotePath): string
     {
-        $fp = fopen('php://temp', 'r+');
-        if ($fp === false || !ftp_fget($this->conn, $fp, $remotePath, FTP_BINARY)) {
-            if ($fp !== false) {
-                fclose($fp);
-            }
-            throw new \RuntimeException("FTP: download failed: $remotePath");
+        $ch = $this->init($this->baseUrl . $remotePath);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $body = curl_exec($ch);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($err !== '') {
+            throw new \RuntimeException("FTP: download failed: $remotePath: $err");
         }
-        rewind($fp);
-        $content = stream_get_contents($fp);
-        fclose($fp);
-        return $content ?: '';
+
+        return is_string($body) ? $body : '';
     }
 
-    /** Creates all intermediate directories for a remote path. */
-    public function mkdirs(string $remotePath): void
+    /** No-op: cURL creates directories automatically via CURLOPT_FTP_CREATE_MISSING_DIRS. */
+    public function mkdirs(string $remotePath): void {}
+
+    public function close(): void {}
+
+    private function init(string $url): \CurlHandle
     {
-        $dir = dirname($remotePath);
-        if ($dir === '.' || $dir === '/') {
-            return;
+        $ch = curl_init($url);
+        if ($ch === false) {
+            throw new \RuntimeException('FTP: curl_init failed');
         }
-
-        $parts = explode('/', ltrim($dir, '/'));
-        @ftp_chdir($this->conn, '/');
-
-        foreach ($parts as $part) {
-            if ($part === '') {
-                continue;
-            }
-            if (!@ftp_chdir($this->conn, $part)) {
-                ftp_mkdir($this->conn, $part);
-                ftp_chdir($this->conn, $part);
-            }
-        }
-
-        @ftp_chdir($this->conn, '/');
+        curl_setopt_array($ch, [
+            CURLOPT_USERPWD       => $this->userPwd,
+            CURLOPT_USE_SSL       => $this->sslMode,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_FTP_USE_EPRT  => !$this->usePassive,
+            CURLOPT_FTP_USE_EPSV  => $this->usePassive,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT       => 60,
+        ]);
+        return $ch;
     }
 
-    public function close(): void
+    private function exec(\CurlHandle $ch, string $context): void
     {
-        ftp_close($this->conn);
+        curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        if ($err !== '') {
+            throw new \RuntimeException("FTP: $context: $err");
+        }
     }
 }
