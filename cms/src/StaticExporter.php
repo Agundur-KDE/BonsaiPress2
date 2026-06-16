@@ -131,17 +131,14 @@ class StaticExporter
                 continue;
             }
 
-            if ($item === '_resources') {
-                continue;
-            }
-
             if (is_dir($path)) {
                 // BonsaiPress owns all subdirs — delete entirely so removed pages leave no trace
                 $this->deleteDir($path);
-            } elseif (str_ends_with($item, '.html') || $item === 'sitemap.xml') {
+            } elseif ($item === 'index.html' || $item === 'sitemap.xml') {
+                // Only these two root-level files are BonsaiPress-generated
                 unlink($path);
             }
-            // Root-level non-html files (favicons, verification files etc.) are preserved
+            // Everything else at root level (manual HTML, images, favicons etc.) is preserved
         }
     }
 
