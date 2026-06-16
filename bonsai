@@ -59,10 +59,17 @@ is_running() {
 }
 
 _restart_if_running() {
-    if command -v docker &>/dev/null && docker info &>/dev/null 2>&1 && is_running; then
+    command -v docker &>/dev/null && docker info &>/dev/null 2>&1 || return
+    if is_running; then
         info "Docker wird neu gestartet..."
         docker compose -f "$SCRIPT_DIR/compose.yml" restart > /dev/null 2>&1
         ok "Neugestartet."
+    else
+        info "BonsaiPress startet..."
+        docker compose -f "$SCRIPT_DIR/compose.yml" up -d --build > /tmp/bonsai-start.log 2>&1 || {
+            err "Fehler beim Starten:"; cat /tmp/bonsai-start.log; exit 1
+        }
+        ok "Bereit."
     fi
 }
 
