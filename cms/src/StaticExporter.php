@@ -131,6 +131,10 @@ class StaticExporter
                 continue;
             }
 
+            if ($item === '_resources') {
+                continue;
+            }
+
             if (is_dir($path)) {
                 // BonsaiPress owns all subdirs — delete entirely so removed pages leave no trace
                 $this->deleteDir($path);
