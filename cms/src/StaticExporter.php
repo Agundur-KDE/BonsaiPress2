@@ -121,32 +121,44 @@ class StaticExporter
         if (!is_dir($this->staticDir)) {
             return;
         }
-        $this->cleanDir($this->staticDir, true);
-    }
 
-    private function cleanDir(string $dir, bool $isRoot = false): void
-    {
-        foreach (scandir($dir) as $item) {
+        foreach (scandir($this->staticDir) as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
 
-            $path = $dir . '/' . $item;
+            $path = $this->staticDir . '/' . $item;
 
             if (is_link($path)) {
                 continue;
             }
 
-            if ($isRoot && $item === '_resources') {
+            if ($item === '_resources') {
                 continue;
             }
 
             if (is_dir($path)) {
-                $this->cleanDir($path);
-                @rmdir($path);
+                // BonsaiPress owns all subdirs — delete entirely so removed pages leave no trace
+                $this->deleteDir($path);
             } elseif (str_ends_with($item, '.html') || $item === 'sitemap.xml') {
                 unlink($path);
             }
+            // Root-level non-html files (favicons, verification files etc.) are preserved
         }
+    }
+
+    private function deleteDir(string $dir): void
+    {
+        foreach (scandir($dir) as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $item;
+            if (is_link($path)) {
+                continue;
+            }
+            is_dir($path) ? $this->deleteDir($path) : unlink($path);
+        }
+        rmdir($dir);
     }
 }
