@@ -56,7 +56,7 @@ class DeployCommand extends Command
                 (int) \ECMS_CONFIG::$ftp_port,
             );
             $ftp->login(\ECMS_CONFIG::$ftp_user, \ECMS_CONFIG::$ftp_passwd);
-            $ftp->passive(!(bool) \ECMS_CONFIG::$ftp_force_active);
+            $ftp->passive((bool) \ECMS_CONFIG::$ftp_force_active);
         } catch (\RuntimeException $e) {
             $output->writeln('<error>' . $e->getMessage() . '</error>');
             return Command::FAILURE;

@@ -66,6 +66,11 @@ class EcmsConfig implements Config
         return \ECMS_CONFIG::$path_to_resources;
     }
 
+    public function minifyHtmlOutput(): bool
+    {
+        return (bool) \ECMS_CONFIG::$minify_html_output;
+    }
+
     public function baseUrl(): string
     {
         $url = \ECMS_CONFIG::$proto . '://';

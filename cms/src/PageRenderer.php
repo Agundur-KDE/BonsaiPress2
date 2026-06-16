@@ -54,11 +54,17 @@ class PageRenderer
 
         $this->processAddons($page, $tpl, $mode, $pathMap);
 
-        return $tpl->fetch('Prolog')
-             . $tpl->fetch('Head')
-             . $tpl->fetch('Body1')
-             . $tpl->fetch('Content')
-             . $tpl->fetch('Body2');
+        $html = $tpl->fetch('Prolog')
+              . $tpl->fetch('Head')
+              . $tpl->fetch('Body1')
+              . $tpl->fetch('Content')
+              . $tpl->fetch('Body2');
+
+        if ($mode === 'static' && $this->config->minifyHtmlOutput()) {
+            $html = (new HtmlMinifier())->minify($html);
+        }
+
+        return $html;
     }
 
     private function loadPageConfig(int $pageId): Section

@@ -22,4 +22,6 @@ interface Config
     public function pathToResources(): string;
 
     public function baseUrl(): string;
+
+    public function minifyHtmlOutput(): bool;
 }
