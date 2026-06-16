@@ -198,7 +198,7 @@ switch_cmd() {
     local active
     active="$(_get_active)"
 
-    if [[ "$name" == "$active" ]]; then
+    if [[ "$name" == "$active" && -L "$SCRIPT_DIR/current" ]]; then
         ok "Projekt '$name' ist bereits aktiv."
         return
     fi
@@ -260,6 +260,19 @@ switch_cmd() {
 
     # Update symlink and active marker
     info "Wechsle zu '$name'..."
+
+    # If current/ is a real directory (not yet a symlink), check for changes and remove
+    if [[ -d "$SCRIPT_DIR/current" && ! -L "$SCRIPT_DIR/current" ]]; then
+        local dirty
+        dirty=$(git -C "$SCRIPT_DIR/current" status --porcelain 2>/dev/null)
+        if [[ -n "$dirty" ]]; then
+            err "current/ ist noch kein Symlink und hat uncommittete Änderungen."
+            err "Bitte erst in current/ committen und pushen, dann nochmal switch."
+            exit 1
+        fi
+        rm -rf "$SCRIPT_DIR/current"
+    fi
+
     ln -sfn "$client_dir" "$SCRIPT_DIR/current"
     _set_active "$name"
 
