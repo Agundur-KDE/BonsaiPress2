@@ -18,12 +18,12 @@ class PageRenderer
         $this->templatePath = $this->contentPath . '/templates';
     }
 
-    public function render(Page $page, string $mode = 'dynamic', array $pathMap = []): string
+    public function render(Page $page, string $mode = 'dynamic', array $pathMap = [], array $pageTree = []): string
     {
-        if (empty($pathMap)) {
-            $pathMap = (new XmlPageRepository(
-                $this->contentPath . '/site_structure.xml'
-            ))->getPathMap();
+        if (empty($pathMap) || empty($pageTree)) {
+            $repo = new XmlPageRepository($this->contentPath . '/site_structure.xml');
+            if (empty($pathMap))  $pathMap  = $repo->getPathMap();
+            if (empty($pageTree)) $pageTree = $repo->getTree();
         }
 
         $pageConfig = $this->loadPageConfig($page->id);
@@ -52,7 +52,7 @@ class PageRenderer
         $tpl->assign('META',     $content->fetch('Meta'));
         $tpl->assign('SCHEMAORG', $content->fetch('Json'));
 
-        $this->processAddons($page, $tpl, $mode, $pathMap);
+        $this->processAddons($page, $tpl, $mode, $pathMap, $pageTree);
 
         $html = $tpl->fetch('Prolog')
               . $tpl->fetch('Head')
@@ -89,10 +89,11 @@ class PageRenderer
         return $tpl;
     }
 
-    private function processAddons(Page $page, Section $tpl, string $mode, array $pathMap): void
+    private function processAddons(Page $page, Section $tpl, string $mode, array $pathMap, array $pageTree): void
     {
         $template_path = $this->templatePath;
         $page_id       = $page->id;
+        $ancestors     = $this->findAncestors($pageTree, $page->id) ?? [];
 
         foreach ($page->addons as $addon) {
             $addonFile = $this->resolveAddon($addon->name);
@@ -106,6 +107,20 @@ class PageRenderer
             require $addonFile;
             $tpl->assign($addon->placeholder, $addoncontent);
         }
+    }
+
+    private function findAncestors(array $pages, int $targetId): ?array
+    {
+        foreach ($pages as $page) {
+            if ($page->id === $targetId) {
+                return [];
+            }
+            $sub = $this->findAncestors($page->children, $targetId);
+            if ($sub !== null) {
+                return array_merge([$page->id], $sub);
+            }
+        }
+        return null;
     }
 
     private function resolveAddon(string $name): ?string

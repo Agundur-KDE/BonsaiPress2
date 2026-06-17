@@ -24,13 +24,15 @@ class StaticExporter
         $pathMap  = $this->repo->getPathMap();
         $sitemap  = [];
 
+        $tree  = $this->repo->getTree();
+
         $pages = new \RecursiveIteratorIterator(
-            new PageTreeIterator($this->repo->getTree()),
+            new PageTreeIterator($tree),
             \RecursiveIteratorIterator::SELF_FIRST
         );
 
         foreach ($pages as $page) {
-            $html = $this->renderer->render($page, 'static', $pathMap);
+            $html = $this->renderer->render($page, 'static', $pathMap, $tree);
             $html = $this->rewriteLinks($html, $pathMap);
 
             $path     = $pathMap[$page->id] ?? '/';

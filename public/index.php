@@ -48,4 +48,4 @@ if ($page === null) {
 }
 
 $renderer = new PageRenderer($config, $basePath);
-echo $renderer->render($page, 'dynamic');
+echo $renderer->render($page, 'dynamic', $repo->getPathMap(), $repo->getTree());
