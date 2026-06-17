@@ -4,7 +4,7 @@
 
     namespace BonsaiPress;
 
-    class Template implements TemplateEngine
+    class Template
     {
         protected array $templates = [];
         protected array $placeholder = [];
