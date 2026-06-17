@@ -31,7 +31,7 @@
 
             $this->templates[$this->current] = file_get_contents($this->current);
 
-            preg_match_all('~{[^\s].*}~UisS', $this->templates[$this->current], $matches);
+            preg_match_all('~{[^\s].*}~UiS', $this->templates[$this->current], $matches);
 
             if ($this->keep_unassigned == true) {
                 $this->placeholder = array_combine(array_values($matches[0]), array_values($matches[0]));
