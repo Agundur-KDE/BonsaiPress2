@@ -11,7 +11,7 @@ class FtpClient
     private bool $usePassive = true;
     private int $sslMode;
 
-    public function __construct(string $host, bool $ssl = true, int $port = 21, int $timeout = 10)
+    public function __construct(string $host, bool $ssl = true, int $port = 21)
     {
         $this->baseUrl = 'ftp://' . $host . ':' . $port;
         // CURLFTPSSL_ALL = explicit TLS (AUTH TLS on port 21), CURLFTPSSL_NONE = plain FTP
@@ -59,31 +59,13 @@ class FtpClient
 
     public function delete(string $remotePath): void
     {
-        $dir  = dirname($remotePath);
-        $file = basename($remotePath);
+        $dir = dirname($remotePath);
 
         $ch = $this->init($this->baseUrl . rtrim($dir, '/') . '/');
         curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_setopt($ch, CURLOPT_QUOTE, ['DELE ' . $remotePath]);
 
         $this->exec($ch, "delete failed: $remotePath");
-    }
-
-    /** Returns file content from remote path. */
-    public function get(string $remotePath): string
-    {
-        $ch = $this->init($this->baseUrl . $remotePath);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        $body = curl_exec($ch);
-        $err  = curl_error($ch);
-        curl_close($ch);
-
-        if ($err !== '') {
-            throw new \RuntimeException("FTP: download failed: $remotePath: $err");
-        }
-
-        return is_string($body) ? $body : '';
     }
 
     /** No-op: cURL creates directories automatically via CURLOPT_FTP_CREATE_MISSING_DIRS. */

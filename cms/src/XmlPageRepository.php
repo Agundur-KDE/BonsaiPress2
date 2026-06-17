@@ -14,9 +14,6 @@ class XmlPageRepository implements PageRepository
     /** @var array<int, Page> */
     private array $byId = [];
 
-    /** @var array<string, Page> */
-    private array $byPath = [];
-
     public function __construct(string $xmlPath)
     {
         $xml = simplexml_load_file($xmlPath);
@@ -119,8 +116,7 @@ class XmlPageRepository implements PageRepository
 
     private function register(Page $page): void
     {
-        $this->byId[$page->id]     = $page;
-        $this->byPath[$page->path] = $page;
+        $this->byId[$page->id] = $page;
         foreach ($page->children as $child) {
             $this->register($child);
         }
