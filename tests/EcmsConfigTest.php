@@ -25,8 +25,7 @@ class EcmsConfigTest extends TestCase
 
     public function testDomainFromClientConfig(): void
     {
-        // Client config sets domain to 'agundur.de'
-        $this->assertSame('agundur.de', $this->config->domain());
+        $this->assertSame('domain.tld', $this->config->domain());
     }
 
     public function testAllowedLanguagesIsArray(): void
