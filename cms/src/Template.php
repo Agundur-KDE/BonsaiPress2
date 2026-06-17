@@ -48,7 +48,7 @@
         protected function replace(): void
         {
             $this->output = '';
-            foreach ($this->templates as $key => &$content) {
+            foreach ($this->templates as $content) {
                 $this->output .= str_replace(array_keys($this->placeholder), array_values($this->placeholder), $content);
             }
         }
