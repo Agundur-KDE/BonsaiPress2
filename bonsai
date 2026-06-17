@@ -5,6 +5,7 @@ BONSAI_CONFIG="$HOME/.config/bonsai"
 CLIENTS_DIR="$SCRIPT_DIR/clients"
 PROJECTS_FILE="$BONSAI_CONFIG/projects.conf"
 ACTIVE_FILE="$BONSAI_CONFIG/active"
+DEMO_REPO="https://github.com/Agundur-KDE/DEMO.git"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -73,10 +74,25 @@ _restart_if_running() {
     fi
 }
 
+# --- Demo bootstrap ---
+
+_ensure_demo() {
+    [[ -e "$SCRIPT_DIR/current" ]] && return
+    _config_init
+    local demo_dir="$CLIENTS_DIR/DEMO"
+    info "Kein Projekt aktiv — lade Demo..."
+    git clone "$DEMO_REPO" "$demo_dir" 2>/dev/null || { err "Demo-Clone fehlgeschlagen (kein Internet?)."; exit 1; }
+    _project_exists "DEMO" || echo "DEMO $DEMO_REPO" >> "$PROJECTS_FILE"
+    ln -sfn "clients/DEMO" "$SCRIPT_DIR/current"
+    _set_active "DEMO"
+    ok "Demo bereit."
+}
+
 # --- System commands ---
 
 start() {
     check_docker
+    _ensure_demo
 
     if is_running; then
         ok "BonsaiPress läuft bereits."
@@ -346,6 +362,84 @@ remove_cmd() {
     ok "Projekt '$name' entfernt."
 }
 
+# --- New project ---
+
+new_cmd() {
+    local name="${1:-}" remote_url="${2:-}"
+    _config_init
+
+    [[ -z "$name" ]] && { err "Verwendung: bonsai new <name> [<remote-url>]"; exit 1; }
+    _project_exists "$name" && { err "Projekt '$name' ist bereits registriert."; exit 1; }
+
+    local client_dir="$CLIENTS_DIR/$name"
+    [[ -d "$client_dir" ]] && { err "Verzeichnis '$client_dir' existiert bereits."; exit 1; }
+
+    # Template URL aus ~/.config/bonsai/config (BONSAI_TEMPLATE=...)
+    local config_file="$BONSAI_CONFIG/config"
+    local template_url=""
+    [[ -f "$config_file" ]] && template_url=$(grep "^BONSAI_TEMPLATE=" "$config_file" | cut -d= -f2-)
+    if [[ -z "$template_url" ]]; then
+        err "Kein Template konfiguriert. Bitte in '$config_file' eintragen:"
+        echo "  BONSAI_TEMPLATE=git@github.com:user/bonsai-template.git"
+        exit 1
+    fi
+
+    # Template klonen, Git-History entfernen
+    info "Klone Template..."
+    git clone "$template_url" "$client_dir" || { err "Clone fehlgeschlagen."; exit 1; }
+    rm -rf "$client_dir/.git"
+    git -C "$client_dir" init
+    ok "Git initialisiert."
+
+    # Remote-URL (Argument oder interaktiv)
+    if [[ -z "$remote_url" ]]; then
+        read -r -p "  Remote-URL für '$name' (Enter = kein Remote): " remote_url
+    fi
+    if [[ -n "$remote_url" ]]; then
+        git -C "$client_dir" remote add origin "$remote_url"
+        ok "Remote: $remote_url"
+    fi
+
+    # Initialer Commit
+    git -C "$client_dir" add -A
+    git -C "$client_dir" commit -m "Initial commit"
+    ok "Initialer Commit erstellt."
+
+    # In projects.conf registrieren
+    echo "$name ${remote_url:--}" >> "$PROJECTS_FILE"
+    ok "Projekt '$name' registriert."
+
+    # Automatisch wechseln (außer aktives Projekt hat uncommittete Änderungen)
+    local active do_switch=1
+    active="$(_get_active)"
+    if [[ -n "$active" && -d "$CLIENTS_DIR/$active/.git" ]]; then
+        local changes
+        changes=$(git -C "$CLIENTS_DIR/$active" status --porcelain 2>/dev/null)
+        if [[ -n "$changes" ]]; then
+            warn "Aktives Projekt '$active' hat uncommittete Änderungen — nicht automatisch gewechselt."
+            echo "  Wechseln mit: bonsai switch $name"
+            do_switch=0
+        fi
+    fi
+
+    if [[ "$do_switch" -eq 1 ]]; then
+        ln -sfn "clients/$name" "$SCRIPT_DIR/current"
+        _set_active "$name"
+        _restart_if_running
+        echo ""
+        ok "Aktives Projekt: ${BOLD}$name${RESET}"
+        _show_urls
+    fi
+
+    # Push anbieten
+    if [[ -n "$remote_url" ]]; then
+        read -r -p "  Jetzt pushen? [J/n] " answer
+        if [[ "${answer:-J}" =~ ^[Jj]$ ]]; then
+            git -C "$client_dir" push -u origin HEAD || warn "Push fehlgeschlagen."
+        fi
+    fi
+}
+
 # --- Install ---
 
 install_cmd() {
@@ -388,6 +482,7 @@ help_cmd() {
     echo "  bonsai status                  Status und URLs anzeigen"
     echo ""
     echo "  bonsai list                    Alle Projekte anzeigen"
+    echo "  bonsai new <name> [<url>]      Neues Projekt aus Template anlegen"
     echo "  bonsai switch <name>           Zu Projekt wechseln"
     echo "  bonsai add <name> <git-url>    Projekt registrieren"
     echo "  bonsai remove <name>           Projekt entfernen"
@@ -408,6 +503,7 @@ case "${1:-help}" in
     restart)        stop; start ;;
     status)         status ;;
     list)           list_cmd ;;
+    new)            shift; new_cmd "$@" ;;
     switch)         shift; switch_cmd "$@" ;;
     add)            shift; add_cmd "$@" ;;
     remove)         shift; remove_cmd "$@" ;;
