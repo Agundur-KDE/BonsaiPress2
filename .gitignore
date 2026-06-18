@@ -1,4 +1,4 @@
-/vendor/
+# /vendor/ — committed so 'bonsai start' works without composer
 /current/
 /clients/
 /.env
