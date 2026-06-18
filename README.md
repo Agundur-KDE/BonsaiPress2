@@ -26,8 +26,11 @@ That's it.
 git clone https://github.com/Agundur-KDE/BonsaiPress2.git
 cd BonsaiPress2
 ./bonsai install    # makes 'bonsai' available system-wide (once)
-bonsai start        # Docker up — opens demo on :8080 automatically
+bonsai start        # pulls images, starts Docker — demo on :8080
 ```
+
+No build step. Docker pulls pre-built images from
+[ghcr.io/agundur-kde/bonsaipress](https://github.com/Agundur-KDE/BonsaiPress2/pkgs/container/bonsaipress).
 
 Open [http://localhost:8080](http://localhost:8080).
 
