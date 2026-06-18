@@ -103,6 +103,10 @@ composer install
 ./vendor/bin/phpunit
 ```
 
+## Support
+
+Found a bug or have a question? [Open an issue](https://github.com/Agundur-KDE/BonsaiPress2/issues) on GitHub.
+
 ## Credits
 
 Based on [ecms3](https://sebastiany.net) by sebastiany.net.  
