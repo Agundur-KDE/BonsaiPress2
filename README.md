@@ -30,7 +30,7 @@ bonsai start        # pulls images, starts Docker — demo on :8080
 ```
 
 No build step. Docker pulls pre-built images from
-[ghcr.io/agundur-kde/bonsaipress](https://github.com/Agundur-KDE/BonsaiPress2/pkgs/container/bonsaipress).
+[agundur/bonsaipress](https://hub.docker.com/r/agundur/bonsaipress) on Docker Hub.
 
 Open [http://localhost:8080](http://localhost:8080).
 
