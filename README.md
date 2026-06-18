@@ -88,6 +88,19 @@ bonsai new myclient git@github.com:yourorg/myclient.git
 BonsaiPress clones the template, strips the git history, wires up your remote,
 and switches to the new project automatically.
 
+## Team workflow
+
+Project configs are stored per-machine in `~/.config/bonsai/`. When you create
+a new project and push it to GitHub, a colleague registers it on their machine:
+
+```bash
+bonsai add myclient git@github.com:yourorg/myclient.git
+bonsai switch myclient   # clones on first switch
+```
+
+They don't need to run `bonsai new` — that's only for creating projects.
+`bonsai add` just registers an existing remote so `switch` can clone it.
+
 ## Deploy
 
 Add FTP credentials to `current/config/ecms_config.php`, then:
