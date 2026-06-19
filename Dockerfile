@@ -2,6 +2,8 @@ FROM php:8.4-apache
 
 RUN a2enmod rewrite && rm -rf /var/www/html
 
+RUN apt-get update && apt-get install -y unzip && rm -rf /var/lib/apt/lists/*
+
 RUN docker-php-ext-install ftp
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
