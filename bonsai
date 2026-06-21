@@ -299,6 +299,21 @@ switch_cmd() {
     ln -sfn "clients/$name" "$SCRIPT_DIR/current"
     _set_active "$name"
 
+    # Bootstrap-Version aus Projekt auschecken
+    local bs_version_file="$SCRIPT_DIR/current/config/bootstrap-version.txt"
+    if [[ -f "$bs_version_file" ]]; then
+        local bs_version
+        bs_version=$(tr -d '"' < "$bs_version_file" | tr -d '[:space:]')
+        if [[ -n "$bs_version" ]]; then
+            info "Bootstrap: checkout $bs_version..."
+            if git -C "$SCRIPT_DIR/cms/bootstrap" checkout "$bs_version" --quiet 2>/dev/null; then
+                ok "Bootstrap $bs_version aktiv."
+            else
+                warn "Bootstrap-Version '$bs_version' nicht gefunden — bleibt auf aktuellem Stand."
+            fi
+        fi
+    fi
+
     _restart_if_running
 
     echo ""
