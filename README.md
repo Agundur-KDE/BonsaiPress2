@@ -69,7 +69,7 @@ current/  (a client project)
 │   │   ├── templates/           ← HTML templates
 │   │   └── page_config/         ← per-page CSS/JS
 │   ├── sass/
-│   │   └── master.scss          ← compiled by watcher
+│   │   └── main.scss          ← compiled by watcher
 │   └── ecms_config.php          ← FTP, domain, CSS
 └── static/
     └── _resources/              ← CSS, JS, images (committed)

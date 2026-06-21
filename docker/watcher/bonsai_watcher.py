@@ -19,8 +19,8 @@ IGNORED_PATTERNS = re.compile(
     re.VERBOSE
 )
 
-SASS_INPUT  = "current/config/sass/master.scss"
-SASS_OUTPUT = "current/static/_resources/css/master.css"
+SASS_INPUT  = "current/config/sass/main.scss"
+SASS_OUTPUT = "current/static/_resources/css/main.css"
 SASS_LOAD_PATHS = [
     "cms/bootstrap/scss",
     "current/config/sass",

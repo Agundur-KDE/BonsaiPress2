@@ -24,7 +24,7 @@ class ECMS_CONFIG{
 
     public static $db_ini = _path_to_content_.'/config/db.ini';
 
-    public static $default_css = 'master.css';
+    public static $default_css = 'main.css';
     public static $default_dynamic_css = 'dynamic.css';
 
     public static $default_lang = 'de';
