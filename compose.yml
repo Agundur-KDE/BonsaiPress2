@@ -3,6 +3,7 @@ services:
   cms:
     image: ghcr.io/agundur-kde/bonsaipress:latest
     build: .
+    user: "${UID}:${GID}"
     ports:
       - "8080:80"
     volumes:
@@ -12,6 +13,7 @@ services:
   preview:
     image: ghcr.io/agundur-kde/bonsaipress:latest
     build: .
+    user: "${UID}:${GID}"
     ports:
       - "8081:80"
     volumes:
@@ -21,6 +23,7 @@ services:
   watcher:
     image: ghcr.io/agundur-kde/bonsaipress-watcher:latest
     build: ./docker/watcher
+    user: "${UID}:${GID}"
     ports:
       - "8001:8001"
     volumes:
