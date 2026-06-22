@@ -7,6 +7,10 @@ PROJECTS_FILE="$BONSAI_CONFIG/projects.conf"
 ACTIVE_FILE="$BONSAI_CONFIG/active"
 DEMO_REPO="https://github.com/Agundur-KDE/DEMO.git"
 
+export UID
+export GID
+GID=$(id -g)
+
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
