@@ -55,7 +55,7 @@ def run_sass():
 
     # dev mode: source maps ON, no compression
     result = subprocess.run(
-        ["sass", "--silence-deprecation=import"] + load_path_args + [f"{SASS_INPUT}:{SASS_OUTPUT}"],
+        ["sass", "--silence-deprecation=mixed-decls"] + load_path_args + [f"{SASS_INPUT}:{SASS_OUTPUT}"],
         capture_output=True, text=True
     )
     if result.returncode == 0:

@@ -550,7 +550,7 @@ case "${1:-help}" in
         # prod-CSS vor dem Export: kein source-map, komprimiert
         docker compose -f "$SCRIPT_DIR/compose.yml" exec watcher sass \
             --no-source-map --style=compressed \
-            --silence-deprecation=import \
+            --silence-deprecation=mixed-decls \
             --load-path=cms/bootstrap/scss \
             --load-path=current/config/sass \
             current/config/sass/main.scss:current/static/_resources/css/main.css
