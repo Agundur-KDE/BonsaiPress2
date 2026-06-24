@@ -545,7 +545,17 @@ case "${1:-help}" in
     switch)         shift; switch_cmd "$@" ;;
     add)            shift; add_cmd "$@" ;;
     remove)         shift; remove_cmd "$@" ;;
-    static)         shift; run_bp static "$@" ;;
+    static)
+        shift
+        # prod-CSS vor dem Export: kein source-map, komprimiert
+        docker compose -f "$SCRIPT_DIR/compose.yml" exec watcher sass \
+            --no-source-map --style=compressed \
+            --silence-deprecation=import \
+            --load-path=cms/bootstrap/scss \
+            --load-path=current/config/sass \
+            current/config/sass/main.scss:current/static/_resources/css/main.css
+        run_bp static "$@"
+        ;;
     deploy)         shift; run_bp deploy "$@" ;;
     install)        install_cmd ;;
     help|--help|-h) help_cmd ;;

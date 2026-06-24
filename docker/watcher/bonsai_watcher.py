@@ -53,8 +53,9 @@ def run_sass():
     for p in SASS_LOAD_PATHS:
         load_path_args += ["--load-path", p]
 
+    # dev mode: source maps ON, no compression
     result = subprocess.run(
-        ["sass", "--no-source-map"] + load_path_args + [f"{SASS_INPUT}:{SASS_OUTPUT}"],
+        ["sass", "--silence-deprecation=import"] + load_path_args + [f"{SASS_INPUT}:{SASS_OUTPUT}"],
         capture_output=True, text=True
     )
     if result.returncode == 0:
