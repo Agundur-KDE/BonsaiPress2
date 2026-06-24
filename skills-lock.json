@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "marketing-copy": {
+      "source": "woakin/marketing-copy",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "367fc1e7c9a0f67891fd34fa10fac40b23078e6d2660eabd7d26674f0bff32dd"
+    },
+    "skill-finder": {
+      "source": "aktsmm/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skill-finder/SKILL.md",
+      "computedHash": "9bdb73604352d06bc5e244bd90bb7492c5fe07f896999ee03d61024c0479eb1f"
+    }
+  }
+}

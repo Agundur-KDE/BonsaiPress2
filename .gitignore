@@ -4,4 +4,6 @@
 /.env
 .phpunit.result.cache
 .idea/
+/static/
+*.mp4
 

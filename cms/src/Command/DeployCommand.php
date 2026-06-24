@@ -65,7 +65,7 @@ class DeployCommand extends Command
         // Upload hashme.php temporarily to server
         $output->write('Hash-Script hochladen ... ');
         try {
-            $ftp->upload($hashmeRemote, $hashmeLocal);
+            $ftp->upload($hashmeRemote, $hashmeLocal, false);
             $output->writeln('<info>ok</info>');
         } catch (\RuntimeException $e) {
             $output->writeln('<error>' . $e->getMessage() . '</error>');

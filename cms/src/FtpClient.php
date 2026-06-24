@@ -39,7 +39,7 @@ class FtpClient
         $this->usePassive = $mode;
     }
 
-    public function upload(string $remotePath, string $localPath): void
+    public function upload(string $remotePath, string $localPath, bool $createDirs = true): void
     {
         $fp = fopen($localPath, 'rb');
         if ($fp === false) {
@@ -51,7 +51,7 @@ class FtpClient
         curl_setopt($ch, CURLOPT_UPLOAD, true);
         curl_setopt($ch, CURLOPT_INFILE, $fp);
         curl_setopt($ch, CURLOPT_INFILESIZE, $size !== false ? $size : -1);
-        curl_setopt($ch, CURLOPT_FTP_CREATE_MISSING_DIRS, CURLFTP_CREATE_DIR);
+        curl_setopt($ch, CURLOPT_FTP_CREATE_MISSING_DIRS, $createDirs ? CURLFTP_CREATE_DIR : CURLFTP_CREATE_DIR_NONE);
 
         $this->exec($ch, "upload failed: $remotePath");
         fclose($fp);
