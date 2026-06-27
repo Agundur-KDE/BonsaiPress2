@@ -100,14 +100,21 @@ class DeployCommand extends Command
             $output->writeln('<comment>Warnung: ' . $e->getMessage() . '</comment>');
         }
 
+        // Load .bonsaiignore
+        $ignorePatterns = $this->loadIgnorePatterns($basePath . '/current/.bonsaiignore');
+
         // Compute local hashes
         $output->write('Lokale Hashes berechnen ... ');
-        $localWebHashes     = $this->buildLocalHashes($webLocal);
+        $localWebHashes     = $this->buildLocalHashes($webLocal, $ignorePatterns);
         $localIncludeHashes = (!$noInclude && is_dir($includeLocal))
-            ? $this->buildLocalHashes($includeLocal)
+            ? $this->buildLocalHashes($includeLocal, $ignorePatterns)
             : [];
         $output->writeln('<info>ok</info>');
         $output->writeln('');
+
+        // Strip ignored files from server hashes so they are never deleted
+        $serverWebHashes     = $this->stripIgnored($serverWebHashes, $ignorePatterns);
+        $serverIncludeHashes = $this->stripIgnored($serverIncludeHashes, $ignorePatterns);
 
         // Compare
         $webDiff     = $this->diff($localWebHashes, $serverWebHashes);
@@ -206,7 +213,8 @@ class DeployCommand extends Command
     }
 
     /** @return array<string,string> file => sha1 */
-    private function buildLocalHashes(string $dir): array
+    /** @param string[] $ignorePatterns */
+    private function buildLocalHashes(string $dir, array $ignorePatterns = []): array
     {
         $hashes = [];
         $it     = new \RecursiveIteratorIterator(
@@ -222,13 +230,53 @@ class DeployCommand extends Command
                 continue;
             }
 
-            $rel     = ltrim(str_replace($dir, '', $file->getPathname()), DIRECTORY_SEPARATOR);
+            $rel = ltrim(str_replace($dir, '', $file->getPathname()), DIRECTORY_SEPARATOR);
+
+            foreach ($ignorePatterns as $pattern) {
+                if (fnmatch($pattern, $file->getFilename()) || fnmatch($pattern, $rel)) {
+                    continue 2;
+                }
+            }
+
             $content = (string) file_get_contents($file->getPathname());
             $content = str_replace("\r\n", "\n", $content);
             $hashes[$rel] = sha1('blob ' . strlen($content) . "\0" . $content);
         }
 
         return $hashes;
+    }
+
+    /**
+     * @param array<string,string> $hashes
+     * @param string[] $patterns
+     * @return array<string,string>
+     */
+    private function stripIgnored(array $hashes, array $patterns): array
+    {
+        if (empty($patterns)) {
+            return $hashes;
+        }
+        return array_filter($hashes, function(string $rel) use ($patterns): bool {
+            $filename = basename($rel);
+            foreach ($patterns as $pattern) {
+                if (fnmatch($pattern, $filename) || fnmatch($pattern, $rel)) {
+                    return false;
+                }
+            }
+            return true;
+        }, ARRAY_FILTER_USE_KEY);
+    }
+
+    /** @return string[] */
+    private function loadIgnorePatterns(string $path): array
+    {
+        if (!is_file($path)) {
+            return [];
+        }
+        return array_values(array_filter(
+            array_map('trim', file($path, FILE_IGNORE_NEW_LINES)),
+            fn(string $l) => $l !== '' && !str_starts_with($l, '#')
+        ));
     }
 
     /**
