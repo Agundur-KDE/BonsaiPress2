@@ -1,3 +1,4 @@
 [submodule "cms/bootstrap"]
 	path = cms/bootstrap
 	url = https://github.com/twbs/bootstrap.git
+	ignore = all
