@@ -32,6 +32,11 @@
 - Logik → `include/lib/<Name>Handler.php` (testbar mit PHPUnit)
 - HTTP-Wrapper → `static/<name>.php` (dünn, ruft nur Handler auf)
 
+## JS in Templates (main.html, bs4_6menu.html)
+- Template-Engine frisst `{foo}` — Regex `{[^\s].*}` matcht alles was direkt nach `{` kein Leerzeichen hat
+- Fix: immer Leerzeichen nach `{` → `{ passive:true }`, `{ top:0,behavior:'smooth' }`
+- `[^\s]` matcht kein Leerzeichen → Objekt bleibt erhalten
+
 ## Was NIEMALS passiert
 - Htaccess anfassen — egal warum
 - CDN-Links in irgendeiner Form
