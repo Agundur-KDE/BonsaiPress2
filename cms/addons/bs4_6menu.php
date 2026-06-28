@@ -81,7 +81,7 @@ if ((int) $menu_maxDepth >= 0) {
 MenuUlIterator::$UL = MenuUlIterator::$ULCSS = $addontemplate->fetch('MenuUL');
 
 foreach ($rit as $p) {
-    if ($p->notInMenu) {
+    if ($p->notInNav) {
         continue;
     }
 

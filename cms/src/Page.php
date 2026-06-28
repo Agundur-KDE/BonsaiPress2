@@ -21,7 +21,7 @@ class Page
         public readonly array  $children = [],
         public readonly array  $addons = [],
         public readonly bool   $notInSitemap = false,
-        public readonly bool   $notInMenu    = false,
+        public readonly bool   $notInNav     = false,
     ) {}
 
 }
