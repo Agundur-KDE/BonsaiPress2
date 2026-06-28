@@ -84,6 +84,7 @@ class XmlPageRepository implements PageRepository
             children:     $children,
             addons:       $this->parseAddons($node),
             notInSitemap: isset($attrs->not_in_sitemap),
+            notInMenu:    isset($attrs->not_in_menu),
         );
     }
 

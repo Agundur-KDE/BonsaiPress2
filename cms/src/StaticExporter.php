@@ -133,7 +133,7 @@ class StaticExporter
                 continue;
             }
 
-            if ($item === '_resources') {
+            if ($item === '_resources' || $item === '.well-known') {
                 continue;
             }
 
