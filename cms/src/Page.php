@@ -22,6 +22,7 @@ class Page
         public readonly array  $addons = [],
         public readonly bool   $notInSitemap = false,
         public readonly bool   $notInNav     = false,
+        public readonly array  $ankers       = [],  // Anker[]
     ) {}
 
 }

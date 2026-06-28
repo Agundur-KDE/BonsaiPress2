@@ -85,7 +85,23 @@ class XmlPageRepository implements PageRepository
             addons:       $this->parseAddons($node),
             notInSitemap: isset($attrs->not_in_sitemap),
             notInNav:     isset($attrs->not_in_nav),
+            ankers:       $this->parseAnkers($node, $path),
         );
+    }
+
+    /** @return Anker[] */
+    private function parseAnkers(SimpleXMLElement $page, string $pagePath): array
+    {
+        $ankers = [];
+        foreach ($page->anker as $node) {
+            $attrs    = $node->attributes();
+            $ankers[] = new Anker(
+                title:     (string)($attrs->title     ?? ''),
+                titleDesc: (string)($attrs->titledesc ?? ''),
+                location:  (string)($attrs->location  ?? ''),
+            );
+        }
+        return $ankers;
     }
 
     /** @return Addon[] */

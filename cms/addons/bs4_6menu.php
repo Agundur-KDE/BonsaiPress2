@@ -80,8 +80,28 @@ if ((int) $menu_maxDepth >= 0) {
 
 MenuUlIterator::$UL = MenuUlIterator::$ULCSS = $addontemplate->fetch('MenuUL');
 
+$renderAnkers = function (array $ankers, string $pageHref) use ($addontemplate, $css_lvl, $css_noChild, $css_hasParent): void {
+    foreach ($ankers as $anker) {
+        $addontemplate->assign('HASCHILD',    '</li>');
+        $addontemplate->assign('LINKTITLE',   htmlspecialchars($anker->titleDesc, ENT_QUOTES, 'UTF-8'));
+        $addontemplate->assign('LINKNAME',    htmlspecialchars($anker->title,     ENT_QUOTES, 'UTF-8'));
+        $addontemplate->assign('LINKHREF',    htmlspecialchars($pageHref . '#' . $anker->location, ENT_QUOTES, 'UTF-8'));
+        $addontemplate->assign('CSSATTRIBUTES', htmlspecialchars("$css_noChild $css_lvl" . '0', ENT_QUOTES, 'UTF-8'));
+        $addontemplate->assign('LINK',        $addontemplate->fetch('MenuLink'));
+        MenuUlIterator::$UL .= $addontemplate->fetch('MenuChild');
+    }
+};
+
 foreach ($rit as $p) {
+    $href = $modus === 'static'
+        ? ($pathMap[$p->id] ?? '/') . (empty($p->children) && !$p->isRoot ? '.html' : '')
+        : '/?site=' . $p->id;
+
     if ($p->notInNav) {
+        // not_in_nav pages with ankers → render ankers as top-level items
+        if (!empty($p->ankers)) {
+            $renderAnkers($p->ankers, $href);
+        }
         continue;
     }
 
@@ -107,11 +127,10 @@ foreach ($rit as $p) {
 
     $cssattributes[] = $css_lvl . $rit->getDepth();
 
-    $href = $modus === 'static'
-        ? ($pathMap[$p->id] ?? '/') . (empty($p->children) && !$p->isRoot ? '.html' : '')
-        : '/?site=' . $p->id;
-
-    if (!empty($p->children)) {
+    if (!empty($p->ankers)) {
+        $addontemplate->assign('HASCHILD', $addontemplate->fetch('MenuLinkHasChild'));
+        $cssattributes[] = $css_hasChild;
+    } elseif (!empty($p->children)) {
         $addontemplate->assign('HASCHILD', $addontemplate->fetch('MenuLinkHasChild'));
     } else {
         $addontemplate->assign('HASCHILD', '</li>');
@@ -123,12 +142,18 @@ foreach ($rit as $p) {
 
     $addontemplate->assign('ID',             (string) $p->id);
     $addontemplate->assign('LINKTITLE',      htmlspecialchars($p->titleDesc, ENT_QUOTES, 'UTF-8'));
-    $addontemplate->assign('LINKNAME',       htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8'));
-    $addontemplate->assign('LINKHREF',       htmlspecialchars($href, ENT_QUOTES, 'UTF-8'));
+    $addontemplate->assign('LINKNAME',       htmlspecialchars($p->title,     ENT_QUOTES, 'UTF-8'));
+    $addontemplate->assign('LINKHREF',       htmlspecialchars($href,         ENT_QUOTES, 'UTF-8'));
     $addontemplate->assign('CSSATTRIBUTES',  htmlspecialchars(implode(' ', $cssattributes), ENT_QUOTES, 'UTF-8'));
     $addontemplate->assign('LINK',           $addontemplate->fetch('MenuLink'));
 
     MenuUlIterator::$UL .= $addontemplate->fetch('MenuChild');
+
+    if (!empty($p->ankers)) {
+        MenuUlIterator::$UL .= '<ul class="navbar-nav">';
+        $renderAnkers($p->ankers, $href);
+        MenuUlIterator::$UL .= '</ul></li>';
+    }
 }
 
 MenuUlIterator::$UL .= '</ul>';
