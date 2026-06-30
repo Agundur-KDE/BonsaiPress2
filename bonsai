@@ -548,8 +548,34 @@ help_cmd() {
     echo "  bonsai deploy                  Auf Server deployen"
     echo "  bonsai deploy -d               Deploy Vorschau (dry-run)"
     echo ""
+    echo "  bonsai version                 Version anzeigen"
+    echo "  bonsai update                  Docker-Images aktualisieren"
     echo "  bonsai install                 Einmalig: 'bonsai' überall verfügbar machen"
     echo ""
+}
+
+# --- Version ---
+
+version_cmd() {
+    if [[ -d "$SCRIPT_DIR/.git" ]]; then
+        git -C "$SCRIPT_DIR" describe --tags 2>/dev/null || cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "unknown"
+    else
+        cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "unknown"
+    fi
+}
+
+# --- Update ---
+
+update_cmd() {
+    check_docker
+    info "Docker-Images werden aktualisiert..."
+    docker compose -f "$COMPOSE_FILE" pull
+    ok "Images aktuell."
+    if is_running; then
+        info "Container werden neu gestartet..."
+        docker compose -f "$COMPOSE_FILE" up -d
+        ok "Fertig."
+    fi
 }
 
 # --- Router ---
@@ -558,6 +584,8 @@ case "${1:-help}" in
     start)          start ;;
     stop)           stop ;;
     restart)        stop; start ;;
+    version|--version|-v) version_cmd ;;
+    update)         update_cmd ;;
     status)         status ;;
     list)           list_cmd ;;
     new)            shift; new_cmd "$@" ;;
