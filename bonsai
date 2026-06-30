@@ -7,6 +7,14 @@ PROJECTS_FILE="$BONSAI_CONFIG/projects.conf"
 ACTIVE_FILE="$BONSAI_CONFIG/active"
 DEMO_REPO="https://github.com/Agundur-KDE/DEMO.git"
 
+# Dev mode: cms/ exists locally (git clone) — use compose.dev.yml with local build
+# Standalone mode: cms/ is baked into the Docker image — use compose.yml (slim)
+if [[ -d "$SCRIPT_DIR/cms" ]]; then
+    COMPOSE_FILE="$SCRIPT_DIR/compose.dev.yml"
+else
+    COMPOSE_FILE="$SCRIPT_DIR/compose.yml"
+fi
+
 export UID
 export GID
 GID=$(id -g)
@@ -60,18 +68,18 @@ check_docker() {
 }
 
 is_running() {
-    docker compose -f "$SCRIPT_DIR/compose.yml" ps --status running 2>/dev/null | grep -q "cms"
+    docker compose -f "$COMPOSE_FILE" ps --status running 2>/dev/null | grep -q "cms"
 }
 
 _restart_if_running() {
     command -v docker &>/dev/null && docker info &>/dev/null 2>&1 || return
     if is_running; then
         info "Docker wird neu gestartet..."
-        docker compose -f "$SCRIPT_DIR/compose.yml" restart > /dev/null 2>&1
+        docker compose -f "$COMPOSE_FILE" restart > /dev/null 2>&1
         ok "Neugestartet."
     else
         info "BonsaiPress startet..."
-        docker compose -f "$SCRIPT_DIR/compose.yml" up -d > /tmp/bonsai-start.log 2>&1 || {
+        docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
             err "Fehler beim Starten:"; cat /tmp/bonsai-start.log; exit 1
         }
         ok "Bereit."
@@ -105,7 +113,7 @@ start() {
     fi
 
     info "BonsaiPress startet..."
-    docker compose -f "$SCRIPT_DIR/compose.yml" up -d > /tmp/bonsai-start.log 2>&1 || {
+    docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
         err "Fehler beim Starten:"
         cat /tmp/bonsai-start.log
         exit 1
@@ -124,7 +132,7 @@ stop() {
     fi
 
     info "BonsaiPress wird gestoppt..."
-    docker compose -f "$SCRIPT_DIR/compose.yml" down > /dev/null 2>&1
+    docker compose -f "$COMPOSE_FILE" down > /dev/null 2>&1
     ok "Gestoppt."
 }
 
@@ -180,7 +188,7 @@ run_bp() {
         exit 1
     fi
 
-    docker compose -f "$SCRIPT_DIR/compose.yml" exec cms php /var/www/bin/bp "$@"
+    docker compose -f "$COMPOSE_FILE" exec cms php /var/www/bin/bp "$@"
 }
 
 # --- Project management ---
@@ -559,7 +567,7 @@ case "${1:-help}" in
     static)
         shift
         # prod-CSS vor dem Export: kein source-map, komprimiert
-        docker compose -f "$SCRIPT_DIR/compose.yml" exec watcher sass \
+        docker compose -f "$COMPOSE_FILE" exec watcher sass \
             --no-source-map --style=compressed \
             --silence-deprecation=mixed-decls \
             --load-path=cms/bootstrap/scss \

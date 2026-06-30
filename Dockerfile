@@ -17,6 +17,13 @@ RUN echo '<Directory /var/www>\n\
     Require all granted\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
+# Bake CMS core + dependencies into image — users don't need a git clone
+COPY cms/     /var/www/cms/
+COPY vendor/  /var/www/vendor/
+COPY docker/cms.conf     /etc/apache2/sites-available/cms.conf
+COPY docker/preview.conf /etc/apache2/sites-available/preview.conf
+RUN a2ensite cms.conf && a2dissite 000-default.conf
+
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

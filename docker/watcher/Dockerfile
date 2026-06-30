@@ -12,4 +12,9 @@ RUN pip install --no-cache-dir watchdog websockets
 
 WORKDIR /var/www
 
-CMD ["python", "docker/watcher/bonsai_watcher.py"]
+# Bake watcher script + sass load paths into image
+COPY docker/watcher/bonsai_watcher.py /bonsai_watcher.py
+# Bootstrap SCSS needed for sass --load-path cms/bootstrap/scss
+COPY cms/bootstrap/scss /var/www/cms/bootstrap/scss
+
+CMD ["python", "/bonsai_watcher.py"]

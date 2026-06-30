@@ -2,27 +2,29 @@ services:
 
   cms:
     image: ghcr.io/agundur-kde/bonsaipress:latest
+    build: .
     user: "${UID}:${GID}"
     ports:
       - "8080:80"
     volumes:
-      - ./clients:/var/www/clients
-      - ./current:/var/www/current
+      - .:/var/www
+      - ./docker/cms.conf:/etc/apache2/sites-enabled/000-default.conf
 
   preview:
     image: ghcr.io/agundur-kde/bonsaipress:latest
+    build: .
     user: "${UID}:${GID}"
     ports:
       - "8081:80"
     volumes:
-      - ./clients:/var/www/clients
-      - ./current:/var/www/current
+      - .:/var/www
+      - ./docker/preview.conf:/etc/apache2/sites-enabled/000-default.conf
 
   watcher:
     image: ghcr.io/agundur-kde/bonsaipress-watcher:latest
+    build: ./docker/watcher
     user: "${UID}:${GID}"
     ports:
       - "8001:8001"
     volumes:
-      - ./clients:/var/www/clients
-      - ./current:/var/www/current
+      - .:/var/www
