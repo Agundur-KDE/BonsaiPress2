@@ -1,5 +1,7 @@
 # BonsaiPress
 
+[![BonsaiPress — The CMS your AI assistant actually understands](https://www.agundur.de/_resources/pictures/BonsaiPress_LLM.png)](https://www.agundur.de/projects/bonsaipress.html)
+
 **The CMS your AI assistant actually understands.**
 
 No database. No admin UI. Just files, Git, and a shell — exactly how AI works best.
