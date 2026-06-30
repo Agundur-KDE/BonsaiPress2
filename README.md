@@ -1,17 +1,32 @@
 # BonsaiPress
 
-The lean multi-client CMS. No database. Just files, Git, and speed.
+**The CMS your AI assistant actually understands.**
+
+No database. No admin UI. Just files, Git, and a shell — exactly how AI works best.
+
+## Why AI loves BonsaiPress
+
+Most CMS systems hide their state behind admin panels, databases, and plugin systems. AI assistants can't see any of that. BonsaiPress is different:
+
+- **Shell-native** — every operation runs via `bonsai` CLI. No clicking through menus.
+- **Flat files** — content is XML + HTML. Your AI reads, writes, and understands it directly.
+- **No hidden state** — no database, no plugin magic. What you see is what gets deployed.
+- **Static output** — pure HTML, maximum AI crawler visibility (GEO-optimized by design)
+- **Claude Code Skill** — structured instructions that make Claude instantly proficient with BonsaiPress
+
+> Built for the shell. Built for AI.
 
 ## What it is
 
 BonsaiPress is a PHP CMS that runs entirely without a database. Content lives in
 files, structure lives in `site_structure.xml`, and deployment uploads only what
-changed. One Docker command gets you started; one more deploys to production.
+changed.
 
 - **No database** — no MySQL, no migrations, no runtime dependencies
 - **Static export** — generates pure HTML, blazing fast at runtime
 - **Multi-client** — one CMS engine, unlimited client projects, switch in seconds
 - **Hash-diff deploy** — only changed files are uploaded via FTPS
+- **Server auto-init** — `bonsai deploy` creates `web/` and `include/` on Hetzner Managed automatically
 
 ## Requirements
 
@@ -28,9 +43,6 @@ cd BonsaiPress2
 ./bonsai install    # makes 'bonsai' available system-wide (once)
 bonsai start        # pulls images, starts Docker — demo on :8080
 ```
-
-No build step. Docker pulls pre-built images from
-[agundur/bonsaipress](https://hub.docker.com/r/agundur/bonsaipress) on Docker Hub.
 
 Open [http://localhost:8080](http://localhost:8080).
 
@@ -69,8 +81,8 @@ current/  (a client project)
 │   │   ├── templates/           ← HTML templates
 │   │   └── page_config/         ← per-page CSS/JS
 │   ├── sass/
-│   │   └── main.scss          ← compiled by watcher
-│   └── ecms_config.php          ← FTP, domain, CSS
+│   │   └── main.scss            ← compiled by watcher
+│   └── bonsai_config.php        ← FTP, domain, CSS (gitignored — contains passwords)
 └── static/
     └── _resources/              ← CSS, JS, images (committed)
 ```
@@ -88,6 +100,17 @@ bonsai new myclient git@github.com:yourorg/myclient.git
 BonsaiPress clones the template, strips the git history, wires up your remote,
 and switches to the new project automatically.
 
+After `bonsai new`, you'll see:
+
+```
+▶ Next steps:
+  1. current/config/bonsai_config.php — fill in FTP credentials and domain
+     ⚠  Contains passwords — already in .gitignore, never commit!
+  2. bonsai static   — generate static HTML
+  3. bonsai deploy   — deploy (creates web/ and include/ on server automatically)
+  4. CI/CD optional: https://github.com/Agundur-KDE/ftp-hash-deploy-action
+```
+
 ## Team workflow
 
 Project configs are stored per-machine in `~/.config/bonsai/`. When you create
@@ -98,12 +121,9 @@ bonsai add myclient git@github.com:yourorg/myclient.git
 bonsai switch myclient   # clones on first switch
 ```
 
-They don't need to run `bonsai new` — that's only for creating projects.
-`bonsai add` just registers an existing remote so `switch` can clone it.
-
 ## Deploy
 
-Add FTP credentials to `current/config/ecms_config.php`, then:
+Add FTP credentials to `current/config/bonsai_config.php`, then:
 
 ```bash
 bonsai static    # build
@@ -111,6 +131,7 @@ bonsai deploy    # upload changed files only
 ```
 
 Uses explicit FTPS (port 21, cURL). No PHP ftp extension needed.
+First deploy automatically creates `web/` and `include/` on Hetzner Managed servers.
 
 ## Running tests
 
