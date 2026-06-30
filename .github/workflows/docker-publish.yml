@@ -1,0 +1,63 @@
+name: Build & Push Docker Images
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_CMS:     ghcr.io/agundur-kde/bonsaipress
+  IMAGE_WATCHER: ghcr.io/agundur-kde/bonsaipress-watcher
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta — cms
+        id: meta-cms
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_CMS }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Docker meta — watcher
+        id: meta-watcher
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_WATCHER }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & push cms image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta-cms.outputs.tags }}
+
+      - name: Build & push watcher image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/watcher/Dockerfile
+          push: true
+          tags: ${{ steps.meta-watcher.outputs.tags }}
