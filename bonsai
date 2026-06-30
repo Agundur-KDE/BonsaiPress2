@@ -476,6 +476,8 @@ new_cmd() {
     echo -e "     ${YELLOW}⚠  Enthält Passwörter — bereits in .gitignore, nie committen!${RESET}"
     echo -e "  2. ${BOLD}bonsai static${RESET}   — statische HTML generieren"
     echo -e "  3. ${BOLD}bonsai deploy${RESET}   — deployen (legt web/ + include/ auf Server automatisch an)"
+    echo -e "  4. CI/CD optional:  ${BOLD}https://github.com/Agundur-KDE/ftp-hash-deploy-action${RESET}"
+    echo -e "     Ersetzt 'bonsai deploy' in GitHub Actions"
     echo ""
 
     # Push anbieten
