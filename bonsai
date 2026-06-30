@@ -469,6 +469,15 @@ new_cmd() {
         _show_urls
     fi
 
+    # Checklist für neue Nutzer
+    echo ""
+    info "Nächste Schritte:"
+    echo -e "  1. ${BOLD}current/config/bonsai_config.php${RESET} ausfüllen (FTP, Domain)"
+    echo -e "     ${YELLOW}⚠  Enthält Passwörter — bereits in .gitignore, nie committen!${RESET}"
+    echo -e "  2. ${BOLD}bonsai static${RESET}   — statische HTML generieren"
+    echo -e "  3. ${BOLD}bonsai deploy${RESET}   — deployen (legt web/ + include/ auf Server automatisch an)"
+    echo ""
+
     # Push anbieten
     if [[ -n "$remote_url" ]]; then
         read -r -p "  Jetzt pushen? [J/n] " answer

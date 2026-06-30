@@ -71,6 +71,16 @@ class FtpClient
     /** No-op: cURL creates directories automatically via CURLOPT_FTP_CREATE_MISSING_DIRS. */
     public function mkdirs(string $remotePath): void {}
 
+    /** Create remote directory if it doesn't exist. Ignores 550 (already exists). */
+    public function ensureDir(string $remotePath): void
+    {
+        $ch = $this->init($this->baseUrl . '/');
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_setopt($ch, CURLOPT_QUOTE, ['MKD ' . $remotePath]);
+        curl_exec($ch); // 550 if dir exists — intentionally ignored
+        curl_close($ch);
+    }
+
     public function close(): void {}
 
     private function init(string $url): \CurlHandle

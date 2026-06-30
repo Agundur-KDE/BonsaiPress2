@@ -19,8 +19,10 @@ class EcmsConfig implements Config
         // 1. CMS defaults (defines the ECMS_CONFIG class with all static properties)
         require_once $basePath . '/cms/include/ecms_config.php';
 
-        // 2. Client overrides (sets ECMS_CONFIG::$* for this project)
-        $clientConfig = $basePath . '/current/config/ecms_config.php';
+        // 2. Client overrides — bonsai_config.php (new) or ecms_config.php (legacy)
+        $clientConfig = file_exists($basePath . '/current/config/bonsai_config.php')
+            ? $basePath . '/current/config/bonsai_config.php'
+            : $basePath . '/current/config/ecms_config.php';
         if (file_exists($clientConfig)) {
             require_once $clientConfig;
         }

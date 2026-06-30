@@ -62,6 +62,12 @@ class DeployCommand extends Command
             return Command::FAILURE;
         }
 
+        // Ensure Hetzner Managed server structure exists
+        $output->write('Server-Verzeichnisse prüfen ... ');
+        $ftp->ensureDir($ftpBase . '/web');
+        $ftp->ensureDir($ftpBase . '/include');
+        $output->writeln('<info>ok</info>');
+
         // Upload hashme.php temporarily to server
         $output->write('Hash-Script hochladen ... ');
         try {
