@@ -7,14 +7,18 @@ namespace BonsaiPress;
 class StaticExporter
 {
     private string $staticDir;
+    private string $contentPath;
 
     public function __construct(
         private PageRenderer $renderer,
         private PageRepository $repo,
         string $basePath,
         private string $baseUrl = '',
+        private string $lang = 'de',
+        private bool $generateLlmsFull = false,
     ) {
-        $this->staticDir = $basePath . '/current/static';
+        $this->staticDir   = $basePath . '/current/static';
+        $this->contentPath = $basePath . '/current/config/' . $lang . '/contenfiles';
     }
 
     public function export(): \Generator
@@ -23,6 +27,7 @@ class StaticExporter
 
         $pathMap  = $this->repo->getPathMap();
         $sitemap  = [];
+        $llmsFull = [];
 
         $tree  = $this->repo->getTree();
 
@@ -41,6 +46,9 @@ class StaticExporter
 
             if (!$page->notInSitemap) {
                 $sitemap[] = $path;
+                if ($this->generateLlmsFull) {
+                    $llmsFull[] = $this->buildLlmsFullSection($page);
+                }
             }
 
             yield $page->title => $filePath;
@@ -49,6 +57,40 @@ class StaticExporter
         if (!empty($this->baseUrl)) {
             $this->writeSitemap($sitemap);
         }
+
+        if ($this->generateLlmsFull) {
+            $this->writeLlmsFull($llmsFull);
+        }
+    }
+
+    private function buildLlmsFullSection(Page $page): string
+    {
+        $contentFile = $this->contentPath . '/' . $page->id . '.html';
+        if (!is_file($contentFile)) {
+            return '';
+        }
+
+        $section = new Section();
+        $section->read($contentFile);
+        if (!$section->section_exists('Content')) {
+            return '';
+        }
+
+        $text = PlainTextExtractor::extract($section->fetch('Content'));
+        return $text === '' ? '' : "## {$page->title}\n\n{$text}\n";
+    }
+
+    private function writeLlmsFull(array $sections): void
+    {
+        $sections = array_filter($sections, fn(string $s) => $s !== '');
+        if (empty($sections)) {
+            return;
+        }
+        file_put_contents(
+            $this->staticDir . '/llms-full.txt',
+            implode("\n---\n\n", $sections) . "\n",
+            LOCK_EX
+        );
     }
 
     private function writeSitemap(array $paths): void
@@ -140,8 +182,8 @@ class StaticExporter
             if (is_dir($path)) {
                 // BonsaiPress owns all subdirs — delete entirely so removed pages leave no trace
                 $this->deleteDir($path);
-            } elseif ($item === 'index.html' || $item === 'sitemap.xml') {
-                // Only these two root-level files are BonsaiPress-generated
+            } elseif ($item === 'index.html' || $item === 'sitemap.xml' || $item === 'llms-full.txt') {
+                // Only these root-level files are BonsaiPress-generated
                 unlink($path);
             }
             // Everything else at root level (manual HTML, images, favicons etc.) is preserved

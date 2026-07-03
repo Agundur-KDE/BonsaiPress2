@@ -73,6 +73,11 @@ class EcmsConfig implements Config
         return (bool) \ECMS_CONFIG::$minify_html_output;
     }
 
+    public function generateLlmsFull(): bool
+    {
+        return (bool) \ECMS_CONFIG::$generate_llms_full;
+    }
+
     public function baseUrl(): string
     {
         $url = \ECMS_CONFIG::$proto . '://';

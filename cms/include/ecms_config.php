@@ -97,6 +97,9 @@ class ECMS_CONFIG{
      */
     public static $use_index_for_dir    = false;
 
+    /** llms-full.txt automatisch aus contenfiles generieren (respektiert not_in_sitemap) */
+    public static $generate_llms_full   = true;
+
     /** \defgroup template **/
 
     public static  $minify_html_output   = false;

@@ -24,4 +24,6 @@ interface Config
     public function baseUrl(): string;
 
     public function minifyHtmlOutput(): bool;
+
+    public function generateLlmsFull(): bool;
 }

@@ -30,7 +30,7 @@ class StaticCommand extends Command
 
         $repo     = new XmlPageRepository($xmlPath);
         $renderer = new PageRenderer($config, $basePath);
-        $exporter = new StaticExporter($renderer, $repo, $basePath, $config->baseUrl());
+        $exporter = new StaticExporter($renderer, $repo, $basePath, $config->baseUrl(), $lang, $config->generateLlmsFull());
 
         $output->writeln('Starte statischen Export...');
 
@@ -39,6 +39,9 @@ class StaticCommand extends Command
         }
 
         $output->writeln('  ✓ sitemap.xml');
+        if ($config->generateLlmsFull()) {
+            $output->writeln('  ✓ llms-full.txt');
+        }
         $output->writeln('<info>Fertig.</info>');
         return Command::SUCCESS;
     }
