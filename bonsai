@@ -282,6 +282,7 @@ switch_cmd() {
             err "Clone fehlgeschlagen."
             exit 1
         fi
+        git -C "$client_dir" submodule update --init --recursive --quiet
         ok "Geklont."
     else
         # Cached: try to fetch
@@ -294,10 +295,12 @@ switch_cmd() {
                 read -r -p "  Git pull durchführen? [J/n] " answer
                 if [[ "${answer:-J}" =~ ^[Jj]$ ]]; then
                     git -C "$client_dir" pull --quiet
+                    git -C "$client_dir" submodule update --init --recursive --quiet
                     ok "Aktualisiert."
                 fi
             else
                 ok "Lokal aktuell."
+                git -C "$client_dir" submodule update --init --recursive --quiet
             fi
         else
             local last
@@ -433,6 +436,7 @@ new_cmd() {
     # Template klonen, Git-History entfernen
     info "Klone Template..."
     git clone "$template_url" "$client_dir" || { err "Clone fehlgeschlagen."; exit 1; }
+    git -C "$client_dir" submodule update --init --recursive --quiet
     rm -rf "$client_dir/.git"
     git -C "$client_dir" init
     ok "Git initialisiert."

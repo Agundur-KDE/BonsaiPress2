@@ -174,7 +174,55 @@ class DeployCommand extends Command
 
         $ftp->close();
         $output->writeln('<info>Deploy fertig.</info>');
+
+        $this->printGeoScores($output, $basePath, $webDiff);
+
         return Command::SUCCESS;
+    }
+
+    /**
+     * Optionale Post-Deploy-Prüfung: nur aktiv wenn ECMS_CONFIG::$geo_check_on_deploy
+     * true ist UND current/include/geo-scanner/GeoScanHandler.php existiert (Submodule
+     * agundur-kde/geo-scanner). Scannt jede geänderte .html-Seite live und gibt den
+     * GEO-Score aus. Default false — macht bei jedem Deploy einen HTTP-Roundtrip pro
+     * geänderter Seite, soll nicht ungefragt jeden Deploy verlangsamen.
+     *
+     * @param array{add: string[], update: string[], delete: string[]} $webDiff
+     */
+    private function printGeoScores(OutputInterface $output, string $basePath, array $webDiff): void
+    {
+        if (!(bool) (\ECMS_CONFIG::$geo_check_on_deploy ?? false)) {
+            return;
+        }
+
+        $handlerFile = $basePath . '/current/include/geo-scanner/GeoScanHandler.php';
+        if (!is_file($handlerFile)) {
+            return;
+        }
+
+        $pages = array_values(array_filter(
+            array_merge($webDiff['add'], $webDiff['update']),
+            fn(string $f) => str_ends_with($f, '.html')
+        ));
+        if (empty($pages)) {
+            return;
+        }
+
+        require_once $handlerFile;
+
+        $output->writeln('');
+        $output->writeln('GEO-Check der geänderten Seiten:');
+        $base = rtrim((string) \ECMS_CONFIG::$url, '/');
+
+        foreach ($pages as $page) {
+            $url = $base . '/' . $page;
+            try {
+                $result = (new \GeoScanHandler($url, 'de'))->run();
+                $output->writeln(sprintf('  %-45s %d/100', $page, $result['score']));
+            } catch (\Throwable) {
+                $output->writeln("  <comment>! $page — konnte nicht geprüft werden</comment>");
+            }
+        }
     }
 
     /** @return array<string,string>|null */

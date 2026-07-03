@@ -100,6 +100,9 @@ class ECMS_CONFIG{
     /** llms-full.txt automatisch aus contenfiles generieren (respektiert not_in_sitemap) */
     public static $generate_llms_full   = true;
 
+    /** Nach jedem Deploy geänderte Seiten live mit include/geo-scanner (Submodule) prüfen */
+    public static $geo_check_on_deploy  = false;
+
     /** \defgroup template **/
 
     public static  $minify_html_output   = false;
