@@ -10,6 +10,7 @@ class FtpClient
     private string $userPwd = '';
     private bool $usePassive = true;
     private int $sslMode;
+    private ?\CurlHandle $ch = null;
 
     public function __construct(string $host, bool $ssl = true, int $port = 21)
     {
@@ -27,7 +28,6 @@ class FtpClient
         curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_exec($ch);
         $err = curl_error($ch);
-        curl_close($ch);
 
         if ($err !== '') {
             throw new \RuntimeException("FTP: login failed for user $user: $err");
@@ -78,35 +78,54 @@ class FtpClient
         curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_setopt($ch, CURLOPT_QUOTE, ['MKD ' . $remotePath]);
         curl_exec($ch); // 550 if dir exists — intentionally ignored
-        curl_close($ch);
     }
 
-    public function close(): void {}
+    /** Closes the reused connection. Call once at the end of a deploy run. */
+    public function close(): void
+    {
+        if ($this->ch !== null) {
+            curl_close($this->ch);
+            $this->ch = null;
+        }
+    }
 
     private function init(string $url): \CurlHandle
     {
-        $ch = curl_init($url);
-        if ($ch === false) {
-            throw new \RuntimeException('FTP: curl_init failed');
+        // ponytail: reuse one curl handle for the whole run instead of
+        // curl_init()+curl_close() per file — libcurl then keeps the FTP
+        // control connection (incl. TLS handshake) open across calls.
+        // Re-handshaking per file was the actual deploy bottleneck for
+        // many-small-files trees, not bandwidth.
+        if ($this->ch === null) {
+            $ch = curl_init();
+            if ($ch === false) {
+                throw new \RuntimeException('FTP: curl_init failed');
+            }
+            $this->ch = $ch;
+        } else {
+            curl_reset($this->ch);
         }
-        curl_setopt_array($ch, [
-            CURLOPT_USERPWD       => $this->userPwd,
-            CURLOPT_USE_SSL       => $this->sslMode,
+
+        curl_setopt_array($this->ch, [
+            CURLOPT_URL            => $url,
+            CURLOPT_USERPWD        => $this->userPwd,
+            CURLOPT_USE_SSL        => $this->sslMode,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_FTP_USE_EPRT  => !$this->usePassive,
-            CURLOPT_FTP_USE_EPSV  => $this->usePassive,
+            CURLOPT_FTP_USE_EPRT   => !$this->usePassive,
+            CURLOPT_FTP_USE_EPSV   => $this->usePassive,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT       => 60,
+            CURLOPT_TIMEOUT        => 60,
+            CURLOPT_FORBID_REUSE   => false,
+            CURLOPT_FRESH_CONNECT  => false,
         ]);
-        return $ch;
+        return $this->ch;
     }
 
     private function exec(\CurlHandle $ch, string $context): void
     {
         curl_exec($ch);
         $err = curl_error($ch);
-        curl_close($ch);
         if ($err !== '') {
             throw new \RuntimeException("FTP: $context: $err");
         }
