@@ -48,6 +48,9 @@ class PageRenderer
         }
 
         $content = $this->loadContent($page->id);
+        $content->assign('LASTMOD_ISO', LastModResolver::resolveIso(
+            $this->contentPath . '/contenfiles/' . $page->id . '.html'
+        ));
         $tpl->assign('CONTENT',  $content->fetch('Content'));
         $tpl->assign('META',     $content->fetch('Meta'));
         $tpl->assign('SCHEMAORG', $content->fetch('Json'));
@@ -59,6 +62,12 @@ class PageRenderer
               . $tpl->fetch('Body1')
               . $tpl->fetch('Content')
               . $tpl->fetch('Body2');
+
+        $html = AssetVersioner::apply(
+            $html,
+            $this->config->pathToResources(),
+            $this->basePath . '/current/static' . $this->config->pathToResources()
+        );
 
         if ($mode === 'static' && $this->config->minifyHtmlOutput()) {
             $html = (new HtmlMinifier())->minify($html);
