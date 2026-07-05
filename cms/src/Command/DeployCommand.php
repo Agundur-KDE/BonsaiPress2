@@ -46,6 +46,11 @@ class DeployCommand extends Command
         $hashmeLocal  = $basePath . '/cms/templates/hashme.php';
         $hashmeRemote = $webRemote . 'hashme.php';
 
+        // Must run before the hash diff below: if this creates a new key file,
+        // it needs to show up as a normal "add" so it gets uploaded this run too.
+        $indexNowEnabled = (bool) (\ECMS_CONFIG::$indexnow_enabled ?? false);
+        $indexNowKey     = $indexNowEnabled ? IndexNowNotifier::ensureKey($webLocal) : null;
+
         $output->writeln('Domain : <comment>' . \ECMS_CONFIG::$url . '</comment>');
         $output->writeln('Host   : <comment>' . \ECMS_CONFIG::$ftp_host . '</comment>');
         $output->writeln('');
@@ -177,30 +182,25 @@ class DeployCommand extends Command
         $output->writeln('<info>Deploy fertig.</info>');
 
         $this->printGeoScores($output, $basePath, $webDiff);
-        $this->pingIndexNow($output, $webDiff);
+        if ($indexNowKey !== null) {
+            $this->pingIndexNow($output, $webDiff, $indexNowKey);
+        }
 
         return Command::SUCCESS;
     }
 
     /**
      * Optionale Post-Deploy-Meldung: nur aktiv wenn ECMS_CONFIG::$indexnow_enabled
-     * true ist UND ein Key konfiguriert ist. Meldet alle neu/aktualisierten HTML-Seiten
-     * per IndexNow-Protokoll an Bing/Yandex/Naver/Seznam/Yep — Google unterstützt
-     * IndexNow nicht und wird hier bewusst nicht angesprochen.
+     * true ist. Der Key wird automatisch erzeugt und in static/indexnow-key.txt
+     * persistiert (siehe IndexNowNotifier::ensureKey, aufgerufen vor dem Hash-Diff
+     * oben). Meldet alle neu/aktualisierten HTML-Seiten per IndexNow-Protokoll an
+     * Bing/Yandex/Naver/Seznam/Yep — Google unterstützt IndexNow nicht und wird
+     * hier bewusst nicht angesprochen.
      *
      * @param array{add: string[], update: string[], delete: string[]} $webDiff
      */
-    private function pingIndexNow(OutputInterface $output, array $webDiff): void
+    private function pingIndexNow(OutputInterface $output, array $webDiff, string $key): void
     {
-        if (!(bool) (\ECMS_CONFIG::$indexnow_enabled ?? false)) {
-            return;
-        }
-
-        $key = (string) (\ECMS_CONFIG::$indexnow_key ?? '');
-        if ($key === '') {
-            return;
-        }
-
         $baseUrl = rtrim((string) \ECMS_CONFIG::$url, '/');
         $host    = (string) parse_url($baseUrl, PHP_URL_HOST);
         $files   = array_merge($webDiff['add'], $webDiff['update']);
@@ -216,7 +216,7 @@ class DeployCommand extends Command
             $output->writeln('  → ' . $url);
         }
 
-        $keyLocation = $baseUrl . '/' . $key . '.txt';
+        $keyLocation = $baseUrl . '/' . IndexNowNotifier::KEY_FILENAME;
         $ok = (new IndexNowNotifier())->notify($host, $key, $keyLocation, $urls);
         $output->writeln($ok ? '  <info>ok</info>' : '  <comment>fehlgeschlagen</comment>');
     }

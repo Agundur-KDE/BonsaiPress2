@@ -60,4 +60,51 @@ class IndexNowNotifierTest extends TestCase
             'urlList'     => ['https://www.agundur.de/', 'https://www.agundur.de/geo-scanner.html'],
         ], $payload);
     }
+
+    public function testEnsureKeyGeneratesAndPersistsKeyWhenMissing(): void
+    {
+        $dir = sys_get_temp_dir() . '/indexnow-test-' . uniqid();
+        mkdir($dir);
+
+        try {
+            $key = IndexNowNotifier::ensureKey($dir, fn(): string => 'generated-key');
+
+            $this->assertSame('generated-key', $key);
+            $this->assertSame('generated-key', file_get_contents($dir . '/indexnow-key.txt'));
+        } finally {
+            @unlink($dir . '/indexnow-key.txt');
+            @rmdir($dir);
+        }
+    }
+
+    public function testEnsureKeyReusesExistingFileWithoutRegenerating(): void
+    {
+        $dir = sys_get_temp_dir() . '/indexnow-test-' . uniqid();
+        mkdir($dir);
+        file_put_contents($dir . '/indexnow-key.txt', 'existing-key');
+
+        try {
+            $key = IndexNowNotifier::ensureKey($dir, fn(): string => 'should-not-be-used');
+
+            $this->assertSame('existing-key', $key);
+        } finally {
+            @unlink($dir . '/indexnow-key.txt');
+            @rmdir($dir);
+        }
+    }
+
+    public function testEnsureKeyDefaultGeneratorProducesHexString(): void
+    {
+        $dir = sys_get_temp_dir() . '/indexnow-test-' . uniqid();
+        mkdir($dir);
+
+        try {
+            $key = IndexNowNotifier::ensureKey($dir);
+
+            $this->assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $key);
+        } finally {
+            @unlink($dir . '/indexnow-key.txt');
+            @rmdir($dir);
+        }
+    }
 }

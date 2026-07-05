@@ -103,9 +103,9 @@ class ECMS_CONFIG{
     /** Nach jedem Deploy geänderte Seiten live mit include/geo-scanner (Submodule) prüfen */
     public static $geo_check_on_deploy  = false;
 
-    /** Nach jedem Deploy geänderte Seiten per IndexNow an Bing/Yandex/Naver/Seznam/Yep melden */
+    /** Nach jedem Deploy geänderte Seiten per IndexNow an Bing/Yandex/Naver/Seznam/Yep melden.
+     *  Key wird beim ersten Lauf automatisch erzeugt und in static/indexnow-key.txt persistiert. */
     public static $indexnow_enabled     = false;
-    public static $indexnow_key         = '';
 
     /** \defgroup template **/
 

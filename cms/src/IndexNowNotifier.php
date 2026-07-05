@@ -42,6 +42,25 @@ class IndexNowNotifier
         ];
     }
 
+    public const KEY_FILENAME = 'indexnow-key.txt';
+
+    /** Reuses the key already deployed at $staticDir/indexnow-key.txt, or generates and persists a new one. */
+    public static function ensureKey(string $staticDir, ?callable $generateKey = null): string
+    {
+        $path = rtrim($staticDir, '/') . '/' . self::KEY_FILENAME;
+
+        if (is_file($path)) {
+            return trim((string) file_get_contents($path));
+        }
+
+        $generateKey ??= fn(): string => bin2hex(random_bytes(16));
+        $key = $generateKey();
+
+        file_put_contents($path, $key, LOCK_EX);
+
+        return $key;
+    }
+
     /** @param string[] $urls */
     public function notify(string $host, string $key, string $keyLocation, array $urls): bool
     {
