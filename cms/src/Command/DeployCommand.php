@@ -6,6 +6,7 @@ namespace BonsaiPress\Command;
 
 use BonsaiPress\EcmsConfig;
 use BonsaiPress\FtpClient;
+use BonsaiPress\IndexNowNotifier;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,6 +45,11 @@ class DeployCommand extends Command
         $includeLocal = $basePath . '/current/include';
         $hashmeLocal  = $basePath . '/cms/templates/hashme.php';
         $hashmeRemote = $webRemote . 'hashme.php';
+
+        // Must run before the hash diff below: if this creates a new key file,
+        // it needs to show up as a normal "add" so it gets uploaded this run too.
+        $indexNowEnabled = (bool) (\ECMS_CONFIG::$indexnow_enabled ?? false);
+        $indexNowKey     = $indexNowEnabled ? IndexNowNotifier::ensureKey($webLocal) : null;
 
         $output->writeln('Domain : <comment>' . \ECMS_CONFIG::$url . '</comment>');
         $output->writeln('Host   : <comment>' . \ECMS_CONFIG::$ftp_host . '</comment>');
@@ -176,8 +182,43 @@ class DeployCommand extends Command
         $output->writeln('<info>Deploy fertig.</info>');
 
         $this->printGeoScores($output, $basePath, $webDiff);
+        if ($indexNowKey !== null) {
+            $this->pingIndexNow($output, $webDiff, $indexNowKey);
+        }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Optionale Post-Deploy-Meldung: nur aktiv wenn ECMS_CONFIG::$indexnow_enabled
+     * true ist. Der Key wird automatisch erzeugt und in static/indexnow-key.txt
+     * persistiert (siehe IndexNowNotifier::ensureKey, aufgerufen vor dem Hash-Diff
+     * oben). Meldet alle neu/aktualisierten HTML-Seiten per IndexNow-Protokoll an
+     * Bing/Yandex/Naver/Seznam/Yep — Google unterstützt IndexNow nicht und wird
+     * hier bewusst nicht angesprochen.
+     *
+     * @param array{add: string[], update: string[], delete: string[]} $webDiff
+     */
+    private function pingIndexNow(OutputInterface $output, array $webDiff, string $key): void
+    {
+        $baseUrl = rtrim((string) \ECMS_CONFIG::$url, '/');
+        $host    = (string) parse_url($baseUrl, PHP_URL_HOST);
+        $files   = array_merge($webDiff['add'], $webDiff['update']);
+        $urls    = IndexNowNotifier::buildUrls($files, $baseUrl);
+
+        if (empty($urls)) {
+            return;
+        }
+
+        $output->writeln('');
+        $output->writeln('IndexNow-Meldung:');
+        foreach ($urls as $url) {
+            $output->writeln('  → ' . $url);
+        }
+
+        $keyLocation = $baseUrl . '/' . IndexNowNotifier::KEY_FILENAME;
+        $ok = (new IndexNowNotifier())->notify($host, $key, $keyLocation, $urls);
+        $output->writeln($ok ? '  <info>ok</info>' : '  <comment>fehlgeschlagen</comment>');
     }
 
     /**
