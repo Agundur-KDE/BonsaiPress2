@@ -602,6 +602,7 @@ case "${1:-help}" in
         docker compose -f "$COMPOSE_FILE" exec watcher sass \
             --no-source-map --style=compressed \
             --silence-deprecation=mixed-decls \
+            --silence-deprecation=abs-percent \
             --load-path=cms/bootstrap/scss \
             --load-path=current/config/sass \
             current/config/sass/main.scss:current/static/_resources/css/main.css
