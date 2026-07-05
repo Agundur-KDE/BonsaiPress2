@@ -6,6 +6,7 @@ namespace BonsaiPress\Command;
 
 use BonsaiPress\EcmsConfig;
 use BonsaiPress\FtpClient;
+use BonsaiPress\IndexNowNotifier;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -176,8 +177,48 @@ class DeployCommand extends Command
         $output->writeln('<info>Deploy fertig.</info>');
 
         $this->printGeoScores($output, $basePath, $webDiff);
+        $this->pingIndexNow($output, $webDiff);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Optionale Post-Deploy-Meldung: nur aktiv wenn ECMS_CONFIG::$indexnow_enabled
+     * true ist UND ein Key konfiguriert ist. Meldet alle neu/aktualisierten HTML-Seiten
+     * per IndexNow-Protokoll an Bing/Yandex/Naver/Seznam/Yep — Google unterstützt
+     * IndexNow nicht und wird hier bewusst nicht angesprochen.
+     *
+     * @param array{add: string[], update: string[], delete: string[]} $webDiff
+     */
+    private function pingIndexNow(OutputInterface $output, array $webDiff): void
+    {
+        if (!(bool) (\ECMS_CONFIG::$indexnow_enabled ?? false)) {
+            return;
+        }
+
+        $key = (string) (\ECMS_CONFIG::$indexnow_key ?? '');
+        if ($key === '') {
+            return;
+        }
+
+        $baseUrl = rtrim((string) \ECMS_CONFIG::$url, '/');
+        $host    = (string) parse_url($baseUrl, PHP_URL_HOST);
+        $files   = array_merge($webDiff['add'], $webDiff['update']);
+        $urls    = IndexNowNotifier::buildUrls($files, $baseUrl);
+
+        if (empty($urls)) {
+            return;
+        }
+
+        $output->writeln('');
+        $output->writeln('IndexNow-Meldung:');
+        foreach ($urls as $url) {
+            $output->writeln('  → ' . $url);
+        }
+
+        $keyLocation = $baseUrl . '/' . $key . '.txt';
+        $ok = (new IndexNowNotifier())->notify($host, $key, $keyLocation, $urls);
+        $output->writeln($ok ? '  <info>ok</info>' : '  <comment>fehlgeschlagen</comment>');
     }
 
     /**
