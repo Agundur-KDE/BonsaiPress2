@@ -598,14 +598,25 @@ case "${1:-help}" in
     remove)         shift; remove_cmd "$@" ;;
     static)
         shift
-        # prod-CSS vor dem Export: kein source-map, komprimiert
+        # prod-CSS vor dem Export: kein source-map, komprimiert.
+        # In main.css.new bauen und nur übernehmen wenn sich der Inhalt
+        # wirklich geändert hat — sonst bumpt main.css bei jedem Lauf seine
+        # mtime, und AssetVersioner (?v=<mtime>) cache-bustet grundlos auf
+        # jeder Seite, obwohl sich am CSS gar nichts geändert hat.
         docker compose -f "$COMPOSE_FILE" exec watcher sass \
             --no-source-map --style=compressed \
             --silence-deprecation=mixed-decls \
             --silence-deprecation=abs-percent \
             --load-path=cms/bootstrap/scss \
             --load-path=current/config/sass \
-            current/config/sass/main.scss:current/static/_resources/css/main.css
+            current/config/sass/main.scss:current/static/_resources/css/main.css.new
+        if [ -f current/static/_resources/css/main.css.new ]; then
+            if ! cmp -s current/static/_resources/css/main.css.new current/static/_resources/css/main.css 2>/dev/null; then
+                mv current/static/_resources/css/main.css.new current/static/_resources/css/main.css
+            else
+                rm current/static/_resources/css/main.css.new
+            fi
+        fi
         run_bp static "$@"
         ;;
     deploy)         shift; run_bp deploy "$@" ;;
