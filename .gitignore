@@ -1,5 +1,5 @@
 # /vendor/ — committed so 'bonsai start' works without composer
-/current/
+/current
 /clients/
 /.env
 .phpunit.result.cache
