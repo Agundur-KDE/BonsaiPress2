@@ -2,7 +2,8 @@ FROM php:8.4-apache
 
 RUN a2enmod rewrite && rm -rf /var/www/html
 
-RUN apt-get update && apt-get install -y unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y unzip git && rm -rf /var/lib/apt/lists/*
+RUN git config --system --add safe.directory '*'
 
 RUN docker-php-ext-install ftp pdo_mysql
 
