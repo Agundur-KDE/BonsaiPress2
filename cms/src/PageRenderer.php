@@ -29,12 +29,21 @@ class PageRenderer
         $pageConfig = $this->loadPageConfig($page->id);
         $tpl        = $this->loadTemplate($pageConfig);
 
+        // Dev-CSS mit Sourcemap läuft nie über den Pfad, den bonsai static/deploy
+        // deployt — nur im dynamischen Modus (:8080) und nur wenn der Client das
+        // per sass_create_map explizit anfordert. Static-Export bleibt immer beim
+        // echten Prod-Dateinamen, unabhängig vom Switch.
+        $defaultCss = $this->config->defaultCss();
+        if ($mode === 'dynamic' && $this->config->sassCreateMap()) {
+            $defaultCss = preg_replace('/\.css$/', '.dev.css', $defaultCss);
+        }
+
         $tpl->assign('LANG',       $this->config->defaultLang());
-        $tpl->assign('DEFAULTCSS', $this->config->defaultCss());
+        $tpl->assign('DEFAULTCSS', $defaultCss);
         $tpl->assign('_RESOURCES', $this->config->pathToResources() . '/');
 
         $pageConfig->assign('_RESOURCES', $this->config->pathToResources() . '/');
-        $pageConfig->assign('DEFAULTCSS', $this->config->defaultCss());
+        $pageConfig->assign('DEFAULTCSS', $defaultCss);
 
         $tpl->add('CSS', $pageConfig->fetch('css'));
         if ($mode === 'dynamic') {

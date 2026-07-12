@@ -26,4 +26,6 @@ interface Config
     public function minifyHtmlOutput(): bool;
 
     public function generateLlmsFull(): bool;
+
+    public function sassCreateMap(): bool;
 }

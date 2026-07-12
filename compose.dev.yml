@@ -26,6 +26,8 @@ services:
       context: .
       dockerfile: docker/watcher/Dockerfile
     user: "${UID}:${GID}"
+    environment:
+      - SASS_CREATE_MAP=${SASS_CREATE_MAP:-false}
     ports:
       - "8001:8001"
     volumes:

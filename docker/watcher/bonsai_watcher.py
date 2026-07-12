@@ -28,6 +28,13 @@ SASS_LOAD_PATHS = [
     "current/config/sass",
 ]
 
+# sass_create_map (current/config/ecms_config.php) — wenn an, kompiliert der
+# Watcher zusätzlich eine Sourcemap-Variante für :8080 zum Debuggen, aber
+# NIEMALS nach SASS_OUTPUT: main.css ist die einzige Datei, die bonsai
+# static/deploy anfasst, und muss immer 1:1 dem entsprechen, was live geht.
+SASS_CREATE_MAP = os.environ.get("SASS_CREATE_MAP", "false").lower() == "true"
+SASS_DEV_OUTPUT = "current/static/_resources/css/main.dev.css"
+
 def is_ignored(path: str) -> bool:
     return bool(IGNORED_PATTERNS.search(str(Path(path))))
 
@@ -50,30 +57,44 @@ async def send_reload():
         print(f"Sende 'reload' an {len(connected)} Browser...", flush=True)
         await asyncio.gather(*(ws.send("reload") for ws in connected))
 
+def _sass(extra_flags: list[str], output: str, load_path_args: list[str]) -> bool:
+    result = subprocess.run(
+        ["sass"] + extra_flags
+        + ["--silence-deprecation=mixed-decls", "--silence-deprecation=abs-percent"]
+        + load_path_args + [f"{SASS_INPUT}:{output}"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"sass: fehler\n{result.stderr}", flush=True)
+        return False
+    return True
+
 def run_sass():
     load_path_args = []
     for p in SASS_LOAD_PATHS:
         load_path_args += ["--load-path", p]
 
-    # In SASS_OUTPUT + ".new" bauen und nur übernehmen wenn sich der Inhalt
-    # wirklich geändert hat — sonst bumpt main.css seinen mtime bei jedem
-    # Watcher-Start/jeder Datei-Änderung, auch ohne SCSS-Änderung.
-    #
-    # Gleiche Flags wie `bonsai static` (kein source-map, komprimiert):
-    # Dev- und Prod-Kompilat landen auf demselben Pfad (current/static/_resources/),
-    # den :8080 und der Export/Deploy gemeinsam nutzen. Unterschiedliche Flags
-    # würden bei identischem SCSS trotzdem unterschiedliche Bytes erzeugen und
-    # den Content-Diff-Schutz hier wie auch in `bonsai static` aushebeln.
-    new_output = f"{SASS_OUTPUT}.new"
+    if SASS_CREATE_MAP:
+        # Dev-Variante mit Sourcemap für :8080 — eigener Pfad, main.css bleibt
+        # unberührt. bonsai static/deploy kennen main.dev.css nicht und löschen
+        # sie vor jedem Export, damit sie nie auf den Server kommt. Direkt auf
+        # den finalen Namen kompiliert (kein .new-Staging): der mtime dieser
+        # Datei hat keine Cache-Busting-Konsequenz außerhalb von :8080, ständige
+        # Änderung ist hier erwünscht statt riskant, und die Sourcemap-Datei
+        # referenziert so immer den richtigen Dateinamen.
+        if _sass([], SASS_DEV_OUTPUT, load_path_args):
+            print("sass: ok", flush=True)
+        return
 
-    result = subprocess.run(
-        ["sass", "--no-source-map", "--style=compressed",
-         "--silence-deprecation=mixed-decls", "--silence-deprecation=abs-percent"]
-        + load_path_args + [f"{SASS_INPUT}:{new_output}"],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f"sass: fehler\n{result.stderr}", flush=True)
+    # Ohne den Switch kompiliert der Watcher direkt nach main.css, mit
+    # denselben Flags wie `bonsai static` (sonst erzeugen identische
+    # SCSS-Quellen trotzdem unterschiedliche Bytes und der Content-Diff-
+    # Schutz hier wie in `bonsai static` bumpt grundlos den mtime).
+    #
+    # In main.css.new bauen und nur übernehmen wenn sich der Inhalt wirklich
+    # geändert hat — main.css versioniert den Cache-Buster für JEDE Seite.
+    new_output = f"{SASS_OUTPUT}.new"
+    if not _sass(["--no-source-map", "--style=compressed"], new_output, load_path_args):
         return
 
     if os.path.exists(SASS_OUTPUT) and filecmp.cmp(new_output, SASS_OUTPUT, shallow=False):

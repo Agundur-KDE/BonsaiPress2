@@ -78,6 +78,11 @@ class EcmsConfig implements Config
         return (bool) \ECMS_CONFIG::$generate_llms_full;
     }
 
+    public function sassCreateMap(): bool
+    {
+        return (bool) (\ECMS_CONFIG::$sass_create_map ?? false);
+    }
+
     public function baseUrl(): string
     {
         $url = \ECMS_CONFIG::$proto . '://';

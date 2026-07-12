@@ -78,6 +78,7 @@ class PageRendererLastModTest extends TestCase
             public function baseUrl(): string { return 'https://example.test'; }
             public function minifyHtmlOutput(): bool { return false; }
             public function generateLlmsFull(): bool { return false; }
+            public function sassCreateMap(): bool { return false; }
         };
 
         $page = new Page(

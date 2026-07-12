@@ -112,6 +112,13 @@ start() {
         return
     fi
 
+    # sass_create_map aus der aktiven Client-Config lesen — steuert, ob der
+    # Watcher für :8080 eine Sourcemap-CSS (main.dev.css) mitkompiliert.
+    # bonsai static/deploy ignorieren das komplett, main.css bleibt immer Prod.
+    SASS_CREATE_MAP=$(grep -oP '\$sass_create_map\s*=\s*\K(true|false)' \
+        "$SCRIPT_DIR/current/config/ecms_config.php" 2>/dev/null)
+    export SASS_CREATE_MAP="${SASS_CREATE_MAP:-false}"
+
     info "BonsaiPress startet..."
     docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
         err "Fehler beim Starten:"
@@ -617,9 +624,22 @@ case "${1:-help}" in
                 rm current/static/_resources/css/main.css.new
             fi
         fi
+        # main.dev.css (Sourcemap-Variante für :8080, sass_create_map) darf nie
+        # exportiert/deployt werden — hart löschen, unabhängig vom Watcher-Zustand.
+        rm -f current/static/_resources/css/main.dev.css \
+              current/static/_resources/css/main.dev.css.new \
+              current/static/_resources/css/main.dev.css.map \
+              current/static/_resources/css/main.dev.css.new.map
         run_bp static "$@"
         ;;
-    deploy)         shift; run_bp deploy "$@" ;;
+    deploy)
+        shift
+        rm -f current/static/_resources/css/main.dev.css \
+              current/static/_resources/css/main.dev.css.new \
+              current/static/_resources/css/main.dev.css.map \
+              current/static/_resources/css/main.dev.css.new.map
+        run_bp deploy "$@"
+        ;;
     install)        install_cmd ;;
     help|--help|-h) help_cmd ;;
     *)
