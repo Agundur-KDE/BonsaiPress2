@@ -19,6 +19,13 @@ export UID
 export GID
 GID=$(id -g)
 
+# Docker Compose liest .env automatisch ein, auch bei rohen `docker compose`-
+# Aufrufen ohne diesen Wrapper — verhindert, dass UID/GID stillschweigend auf
+# root fallen (passiert sonst z.B. beim Debuggen mit `docker compose exec`
+# direkt) und dadurch root-owned Dateien entstehen, die spätere `./bonsai`-
+# Läufe mit "Permission denied" blockieren.
+printf 'UID=%s\nGID=%s\n' "$UID" "$GID" > "$SCRIPT_DIR/.env"
+
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
