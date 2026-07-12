@@ -626,18 +626,22 @@ case "${1:-help}" in
         fi
         # main.dev.css (Sourcemap-Variante für :8080, sass_create_map) darf nie
         # exportiert/deployt werden — hart löschen, unabhängig vom Watcher-Zustand.
+        # main.css.watcher.new: Staging-Datei des Watchers (eigener Name, damit
+        # sie nie mit main.css.new hier kollidiert) — falls der Watcher-Prozess
+        # mitten im Schreiben unterbrochen wurde, nie exportieren.
         rm -f current/static/_resources/css/main.dev.css \
               current/static/_resources/css/main.dev.css.new \
               current/static/_resources/css/main.dev.css.map \
-              current/static/_resources/css/main.dev.css.new.map
+              current/static/_resources/css/main.dev.css.new.map \
+              current/static/_resources/css/main.css.watcher.new
         run_bp static "$@"
         ;;
     deploy)
         shift
-        # main.css.new: Reste eines abgebrochenen/überlappenden static-Laufs
-        # (z.B. Watcher-Neustart während bonsai static). main.dev.css: darf nie
-        # auf den Server, siehe static)-Block. Beides letzte Sicherung vor Deploy.
+        # main.css.new: Reste eines abgebrochenen static-Laufs. main.dev.css +
+        # main.css.watcher.new: dürfen nie auf den Server, siehe static)-Block.
         rm -f current/static/_resources/css/main.css.new \
+              current/static/_resources/css/main.css.watcher.new \
               current/static/_resources/css/main.dev.css \
               current/static/_resources/css/main.dev.css.new \
               current/static/_resources/css/main.dev.css.map \

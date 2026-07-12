@@ -91,9 +91,13 @@ def run_sass():
     # SCSS-Quellen trotzdem unterschiedliche Bytes und der Content-Diff-
     # Schutz hier wie in `bonsai static` bumpt grundlos den mtime).
     #
-    # In main.css.new bauen und nur übernehmen wenn sich der Inhalt wirklich
-    # geändert hat — main.css versioniert den Cache-Buster für JEDE Seite.
-    new_output = f"{SASS_OUTPUT}.new"
+    # In main.css.watcher.new bauen und nur übernehmen wenn sich der Inhalt
+    # wirklich geändert hat — main.css versioniert den Cache-Buster für JEDE
+    # Seite. Eigener Staging-Name (nicht main.css.new): `bonsai static` baut
+    # unabhängig in main.css.new — geteilter Name hieß, dass ein Watcher-Lauf
+    # mitten in einem `bonsai deploy`-Hash-Scan die Datei neu anlegen konnte,
+    # nachdem deploy sie schon aufgeräumt hatte (TOCTOU-Race).
+    new_output = f"{SASS_OUTPUT}.watcher.new"
     if not _sass(["--no-source-map", "--style=compressed"], new_output, load_path_args):
         return
 
