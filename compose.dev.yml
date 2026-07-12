@@ -22,7 +22,9 @@ services:
 
   watcher:
     image: ghcr.io/agundur-kde/bonsaipress-watcher:latest
-    build: ./docker/watcher
+    build:
+      context: .
+      dockerfile: docker/watcher/Dockerfile
     user: "${UID}:${GID}"
     ports:
       - "8001:8001"
