@@ -14,9 +14,9 @@ class AssetVersioner
             '~(href|src)="(' . preg_quote($resourcesUrl, '~') . '/[^"?]+\.(?:css|js))"~',
             function (array $m) use ($resourcesUrl, $resourcesPath) {
                 $relative = substr($m[2], strlen($resourcesUrl));
-                $mtime = @filemtime($resourcesPath . $relative);
-                return $mtime !== false
-                    ? $m[1] . '="' . $m[2] . '?v=' . date('Ymd-His', $mtime) . '"'
+                $hash = @sha1_file($resourcesPath . $relative);
+                return $hash !== false
+                    ? $m[1] . '="' . $m[2] . '?v=' . substr($hash, 0, 10) . '"'
                     : $m[0];
             },
             $html
