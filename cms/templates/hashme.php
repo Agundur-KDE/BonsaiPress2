@@ -1,5 +1,8 @@
 <?php
 
+// Standalone script, uploaded and executed on the remote server — can't
+// require BonsaiPress\GitBlobHash (cms/src/ isn't deployed). Formula here
+// must stay byte-identical to GitBlobHash::of() by hand.
 error_reporting(0);
 header('Content-Type: application/json');
 header('X-Powered-By: BonsaiPress');

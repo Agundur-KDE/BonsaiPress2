@@ -6,6 +6,7 @@ namespace BonsaiPress\Tests;
 
 use PHPUnit\Framework\TestCase;
 use BonsaiPress\AssetVersioner;
+use BonsaiPress\GitBlobHash;
 
 class AssetVersionerTest extends TestCase
 {
@@ -13,7 +14,7 @@ class AssetVersionerTest extends TestCase
 
     public function testAppendsContentHashToCssHref(): void
     {
-        $version = substr(sha1_file($this->resourcesPath . '/style.css'), 0, 10);
+        $version = substr(GitBlobHash::ofFile($this->resourcesPath . '/style.css'), 0, 10);
         $html    = '<link href="/_resources/style.css" rel="stylesheet">';
 
         $result = AssetVersioner::apply($html, '/_resources', $this->resourcesPath);
@@ -26,7 +27,7 @@ class AssetVersionerTest extends TestCase
 
     public function testAppendsContentHashToJsSrc(): void
     {
-        $version = substr(sha1_file($this->resourcesPath . '/app.js'), 0, 10);
+        $version = substr(GitBlobHash::ofFile($this->resourcesPath . '/app.js'), 0, 10);
         $html    = '<script src="/_resources/app.js"></script>';
 
         $result = AssetVersioner::apply($html, '/_resources', $this->resourcesPath);

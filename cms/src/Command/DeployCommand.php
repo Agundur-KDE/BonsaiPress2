@@ -6,6 +6,7 @@ namespace BonsaiPress\Command;
 
 use BonsaiPress\EcmsConfig;
 use BonsaiPress\FtpClient;
+use BonsaiPress\GitBlobHash;
 use BonsaiPress\IndexNowNotifier;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -333,9 +334,11 @@ class DeployCommand extends Command
                 }
             }
 
-            $content = (string) file_get_contents($file->getPathname());
-            $content = str_replace("\r\n", "\n", $content);
-            $hashes[$rel] = sha1('blob ' . strlen($content) . "\0" . $content);
+            $hash = GitBlobHash::ofFile($file->getPathname());
+            if ($hash === false) {
+                continue;
+            }
+            $hashes[$rel] = $hash;
         }
 
         return $hashes;
