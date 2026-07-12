@@ -634,7 +634,11 @@ case "${1:-help}" in
         ;;
     deploy)
         shift
-        rm -f current/static/_resources/css/main.dev.css \
+        # main.css.new: Reste eines abgebrochenen/überlappenden static-Laufs
+        # (z.B. Watcher-Neustart während bonsai static). main.dev.css: darf nie
+        # auf den Server, siehe static)-Block. Beides letzte Sicherung vor Deploy.
+        rm -f current/static/_resources/css/main.css.new \
+              current/static/_resources/css/main.dev.css \
               current/static/_resources/css/main.dev.css.new \
               current/static/_resources/css/main.dev.css.map \
               current/static/_resources/css/main.dev.css.new.map
