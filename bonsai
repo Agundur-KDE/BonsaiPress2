@@ -653,6 +653,17 @@ case "${1:-help}" in
               current/static/_resources/css/main.dev.css.new \
               current/static/_resources/css/main.dev.css.map \
               current/static/_resources/css/main.dev.css.new.map
+        # Nur Clients mit eigenen Composer-Dependencies (current/include/composer.json)
+        # betroffen — cms/ selbst hat keine. Bricht den Deploy ab, wenn composer audit
+        # eine bekannte Sicherheitslücke in einer Dependency findet.
+        if [ -f current/include/composer.json ]; then
+            info "Composer-Security-Audit (current/include)..."
+            if ! (cd current/include && composer audit --no-interaction); then
+                err "composer audit hat Sicherheitslücken gefunden — Deploy abgebrochen."
+                exit 1
+            fi
+            ok "Keine bekannten Sicherheitslücken."
+        fi
         run_bp deploy "$@"
         ;;
     install)        install_cmd ;;
