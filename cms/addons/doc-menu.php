@@ -23,6 +23,10 @@ $buildMenu = function (array $pages, int $depth) use (
     $html = $ulOpen;
 
     foreach ($pages as $menuPage) {
+        if ($menuPage->notInNav) {
+            continue;
+        }
+
         $css = [$cfg['css_lvl'] . $depth];
 
         if ($depth > 0)                                    $css[] = $cfg['css_hasParent'];
