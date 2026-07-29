@@ -15,7 +15,7 @@
         <page id="11" title="Haidir" location="haidir" titledesc="Haidir quests" content_type="standard_html"/>
         <page id="12" title="Daritha" location="daritha" titledesc="Daritha quests" content_type="standard_html"/>
     </page>
-    <page id="2" title="Pear Leaderboard" location="pearfinds" titledesc="Top Pear Finders" content_type="standard_html">
+    <page id="2" title="Pear Leaderboard" location="pearfinds" titledesc="Top Pear Finders" content_type="standard_html" lang="en">
         <addon addon="bs4_6menu" placeholder="MAINMENU"/>
         <addon>canonical::CANONICAL::https</addon>
     </page>

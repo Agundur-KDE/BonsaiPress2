@@ -86,6 +86,7 @@ class XmlPageRepository implements PageRepository
             notInSitemap: isset($attrs->not_in_sitemap),
             notInNav:     isset($attrs->not_in_nav),
             ankers:       $this->parseAnkers($node, $path),
+            lang:         (string)($attrs->lang ?? ''),
         );
     }
 

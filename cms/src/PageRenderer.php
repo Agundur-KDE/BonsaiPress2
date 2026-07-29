@@ -38,7 +38,7 @@ class PageRenderer
             $defaultCss = preg_replace('/\.css$/', '.dev.css', $defaultCss);
         }
 
-        $tpl->assign('LANG',       $this->config->defaultLang());
+        $tpl->assign('LANG',       $page->lang !== '' ? $page->lang : $this->config->defaultLang());
         $tpl->assign('DEFAULTCSS', $defaultCss);
         $tpl->assign('_RESOURCES', $this->config->pathToResources() . '/');
 

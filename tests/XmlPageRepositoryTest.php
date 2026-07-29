@@ -125,4 +125,16 @@ class XmlPageRepositoryTest extends TestCase
         $this->assertSame('CANONICAL', $addon->placeholder);
         $this->assertSame(['https'], $addon->config);
     }
+
+    // --- lang override ---
+
+    public function testLangAttributeIsParsedOntoPage(): void
+    {
+        $this->assertSame('en', $this->repo->findById(2)->lang);
+    }
+
+    public function testPageWithoutLangAttributeDefaultsToEmptyString(): void
+    {
+        $this->assertSame('', $this->repo->findById(1)->lang);
+    }
 }
