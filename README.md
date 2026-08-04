@@ -14,7 +14,7 @@ Most CMS systems hide their state behind admin panels, databases, and plugin sys
 - **Flat files** — content is XML + HTML. Your AI reads, writes, and understands it directly.
 - **No hidden state** — no database, no plugin magic. What you see is what gets deployed.
 - **Static output** — pure HTML, maximum AI crawler visibility (GEO-optimized by design)
-- **Claude Code Skill** — structured instructions that make Claude instantly proficient with BonsaiPress
+- **Claude Code Skill** — structured instructions that make Claude instantly proficient with BonsaiPress ([get it here](https://www.agundur.de/claude-skills.html))
 
 > Built for the shell. Built for AI.
 
