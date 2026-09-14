@@ -6,6 +6,8 @@
 
 No database. No admin UI. Just files, Git, and a shell — exactly how AI works best.
 
+If BonsaiPress helps you build or maintain a website, [support continued development through GitHub Sponsors](https://github.com/sponsors/Agundur-KDE).
+
 ## Why AI loves BonsaiPress
 
 Most CMS systems hide their state behind admin panels, databases, and plugin systems. AI assistants can't see any of that. BonsaiPress is different:
