@@ -112,6 +112,15 @@ sudo apt install docker-compose-plugin
 ```
 If your distro's package is missing or too old, install Docker from [Docker's official apt repo](https://docs.docker.com/engine/install/) instead — distro-packaged Docker often ships without the Compose plugin.
 
+If you only have the legacy standalone `docker-compose` (v1, with a hyphen — check with `docker-compose --version`) and no `docker-compose-plugin` package is available at all (e.g. no matching apt repo/PPA for your distro), install the v2 plugin manually — no PPA needed:
+```bash
+mkdir -p ~/.docker/cli-plugins/
+curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o ~/.docker/cli-plugins/docker-compose
+chmod +x ~/.docker/cli-plugins/docker-compose
+docker compose version
+```
+
 **`bonsai: command not found` after `./bonsai install`**
 Your `PATH` doesn't include `~/.local/bin` or `~/bin`, so the installer couldn't place the symlink and printed a manual `ln -s` command instead — scroll up and run it, or add `~/.local/bin` to your `PATH` and re-run `./bonsai install`. Until then, keep invoking it as `./bonsai <command>` from the repo root.
 
