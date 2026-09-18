@@ -68,19 +68,29 @@ Open [http://localhost:8080](http://localhost:8080).
    ./bonsai install
    ```
    This symlinks `bonsai` into `~/.local/bin` or `~/bin` — whichever is already on your `PATH`. If neither is, the command tells you and prints the manual symlink command to run instead.
-5. **Start the stack:**
+5. **(Optional) Sanity-check your environment** before starting — catches Docker permission/proxy/port issues upfront:
+   ```bash
+   ./setup_test.sh
+   ```
+6. **Start the stack:**
    ```bash
    bonsai start
    ```
    First run pulls the `bonsaipress` and `bonsaipress-watcher` images from `ghcr.io/agundur-kde` (a few hundred MB) and boots three containers: CMS (`:8080`), Preview (`:8081`), Watcher (`:8001`).
-6. **Open [http://localhost:8080](http://localhost:8080)** — you should see the demo project.
-7. **Create your own project** (optional, once you're past the demo):
+7. **Open [http://localhost:8080](http://localhost:8080)** — you should see the demo project.
+8. **Create your own project** (optional, once you're past the demo):
    ```bash
    bonsai new myclient
    ```
    Fill in `current/config/bonsai_config.php` with FTP credentials before deploying.
 
 ### Troubleshooting
+
+Run the setup check first — it catches the most common blockers (Docker unreachable, missing `docker compose` plugin, malformed proxy env vars, ports already in use) before you go hunting manually:
+
+```bash
+./setup_test.sh
+```
 
 **`docker: command not found`**
 Docker isn't installed, or your shell doesn't see it yet. Install Docker Desktop / Engine, then open a new terminal.
