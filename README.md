@@ -100,6 +100,18 @@ Docker is installed but the daemon isn't reachable. Two different causes give th
    ```
    Then **log out and back in completely** — a new terminal alone is not enough, group membership is only picked up in a fresh login session. Quick test without re-login: `newgrp docker` in the current shell, then `docker info` again.
 
+**`unknown shorthand flag: 'f' in -f`**
+Docker's `compose` plugin isn't installed — `docker compose -f ...` fails to parse because `docker` doesn't recognize `compose` as a subcommand, and falls back to interpreting `-f` as an unknown global flag. Check with:
+```bash
+docker compose version
+```
+If that errors instead of printing a version, install the plugin (Debian/Ubuntu-based distros):
+```bash
+sudo apt update
+sudo apt install docker-compose-plugin
+```
+If your distro's package is missing or too old, install Docker from [Docker's official apt repo](https://docs.docker.com/engine/install/) instead — distro-packaged Docker often ships without the Compose plugin.
+
 **`bonsai: command not found` after `./bonsai install`**
 Your `PATH` doesn't include `~/.local/bin` or `~/bin`, so the installer couldn't place the symlink and printed a manual `ln -s` command instead — scroll up and run it, or add `~/.local/bin` to your `PATH` and re-run `./bonsai install`. Until then, keep invoking it as `./bonsai <command>` from the repo root.
 
