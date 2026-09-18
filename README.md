@@ -86,7 +86,19 @@ Open [http://localhost:8080](http://localhost:8080).
 Docker isn't installed, or your shell doesn't see it yet. Install Docker Desktop / Engine, then open a new terminal.
 
 **`Docker läuft nicht. Bitte Docker Desktop starten.`**
-Docker is installed but the daemon isn't running. Start Docker Desktop (or on Linux: `sudo systemctl start docker`), then re-run `bonsai start`.
+Docker is installed but the daemon isn't reachable. Two different causes give the exact same message:
+
+1. **Daemon actually not running.** Start it: Docker Desktop (Mac/Windows), or on Linux `sudo systemctl start docker`. Verify with `sudo systemctl status docker`.
+2. **Daemon runs fine, but your user isn't in the `docker` group.** `bonsai` calls `docker info` *without* `sudo` — if that fails with a permission error on `/var/run/docker.sock` while `sudo docker info` works, this is it. Check with:
+   ```bash
+   docker info     # fails?
+   groups          # is "docker" missing from the list?
+   ```
+   Fix:
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
+   Then **log out and back in completely** — a new terminal alone is not enough, group membership is only picked up in a fresh login session. Quick test without re-login: `newgrp docker` in the current shell, then `docker info` again.
 
 **`bonsai: command not found` after `./bonsai install`**
 Your `PATH` doesn't include `~/.local/bin` or `~/bin`, so the installer couldn't place the symlink and printed a manual `ln -s` command instead — scroll up and run it, or add `~/.local/bin` to your `PATH` and re-run `./bonsai install`. Until then, keep invoking it as `./bonsai <command>` from the repo root.
