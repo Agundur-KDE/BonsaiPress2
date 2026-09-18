@@ -95,7 +95,7 @@ Run the setup check first — it catches the most common blockers (Docker unreac
 **`docker: command not found`**
 Docker isn't installed, or your shell doesn't see it yet. Install Docker Desktop / Engine, then open a new terminal.
 
-**`Docker läuft nicht. Bitte Docker Desktop starten.`**
+**`Docker is not running. Please start Docker Desktop.`**
 Docker is installed but the daemon isn't reachable. Two different causes give the exact same message:
 
 1. **Daemon actually not running.** Start it: Docker Desktop (Mac/Windows), or on Linux `sudo systemctl start docker`. Verify with `sudo systemctl status docker`.

@@ -64,12 +64,12 @@ _get_git_url() {
 
 check_docker() {
     if ! command -v docker &>/dev/null; then
-        err "Docker ist nicht installiert."
-        err "Bitte Docker Desktop installieren: https://www.docker.com/products/docker-desktop"
+        err "Docker is not installed."
+        err "Please install Docker Desktop: https://www.docker.com/products/docker-desktop"
         exit 1
     fi
     if ! docker info &>/dev/null; then
-        err "Docker läuft nicht. Bitte Docker Desktop starten."
+        err "Docker is not running. Please start Docker Desktop."
         exit 1
     fi
 }
@@ -81,15 +81,15 @@ is_running() {
 _restart_if_running() {
     command -v docker &>/dev/null && docker info &>/dev/null 2>&1 || return
     if is_running; then
-        info "Docker wird neu gestartet..."
+        info "Restarting Docker..."
         docker compose -f "$COMPOSE_FILE" restart > /dev/null 2>&1
-        ok "Neugestartet."
+        ok "Restarted."
     else
-        info "BonsaiPress startet..."
+        info "BonsaiPress starting..."
         docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
-            err "Fehler beim Starten:"; cat /tmp/bonsai-start.log; exit 1
+            err "Error starting:"; cat /tmp/bonsai-start.log; exit 1
         }
-        ok "Bereit."
+        ok "Ready."
     fi
 }
 
@@ -99,12 +99,12 @@ _ensure_demo() {
     [[ -e "$SCRIPT_DIR/current" ]] && return
     _config_init
     local demo_dir="$CLIENTS_DIR/DEMO"
-    info "Kein Projekt aktiv — lade Demo..."
-    git clone "$DEMO_REPO" "$demo_dir" 2>/dev/null || { err "Demo-Clone fehlgeschlagen (kein Internet?)."; exit 1; }
+    info "No project active — loading demo..."
+    git clone "$DEMO_REPO" "$demo_dir" 2>/dev/null || { err "Demo clone failed (no internet?)."; exit 1; }
     _project_exists "DEMO" || echo "DEMO $DEMO_REPO" >> "$PROJECTS_FILE"
     ln -sfn "clients/DEMO" "$SCRIPT_DIR/current"
     _set_active "DEMO"
-    ok "Demo bereit."
+    ok "Demo ready."
 }
 
 # --- System commands ---
@@ -114,7 +114,7 @@ start() {
     _ensure_demo
 
     if is_running; then
-        ok "BonsaiPress läuft bereits."
+        ok "BonsaiPress is already running."
         _show_urls
         return
     fi
@@ -126,14 +126,14 @@ start() {
         "$SCRIPT_DIR/current/config/ecms_config.php" 2>/dev/null)
     export SASS_CREATE_MAP="${SASS_CREATE_MAP:-false}"
 
-    info "BonsaiPress startet..."
+    info "BonsaiPress starting..."
     docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
-        err "Fehler beim Starten:"
+        err "Error starting:"
         cat /tmp/bonsai-start.log
         exit 1
     }
 
-    ok "Bereit."
+    ok "Ready."
     _show_urls
 }
 
@@ -141,13 +141,13 @@ stop() {
     check_docker
 
     if ! is_running; then
-        warn "BonsaiPress läuft nicht."
+        warn "BonsaiPress is not running."
         return
     fi
 
-    info "BonsaiPress wird gestoppt..."
+    info "Stopping BonsaiPress..."
     docker compose -f "$COMPOSE_FILE" down > /dev/null 2>&1
-    ok "Gestoppt."
+    ok "Stopped."
 }
 
 status() {
@@ -157,11 +157,11 @@ status() {
     active="$(_get_active)"
 
     if is_running; then
-        ok "BonsaiPress läuft."
-        [[ -n "$active" ]] && echo -e "  Aktives Projekt: ${BOLD}$active${RESET}"
+        ok "BonsaiPress is running."
+        [[ -n "$active" ]] && echo -e "  Active project: ${BOLD}$active${RESET}"
         _show_urls
     else
-        echo -e "  ${RED}●${RESET} BonsaiPress läuft nicht  →  ${BOLD}bonsai start${RESET}"
+        echo -e "  ${RED}●${RESET} BonsaiPress is not running  →  ${BOLD}bonsai start${RESET}"
         echo ""
     fi
 
@@ -172,14 +172,14 @@ status() {
             behind=$(git -C "$CLIENTS_DIR/$active" rev-list "HEAD..@{u}" --count 2>/dev/null || echo "0")
             ahead=$(git -C "$CLIENTS_DIR/$active" rev-list "@{u}..HEAD" --count 2>/dev/null || echo "0")
             if [[ "$behind" -gt 0 ]]; then
-                warn "${active} ist ${behind} Commit(s) hinter origin — bitte pullen vor dem Weiterarbeiten"
+                warn "${active} is ${behind} commit(s) behind origin — please pull before continuing"
             elif [[ "$ahead" -gt 0 ]]; then
-                echo -e "  ${YELLOW}↑${RESET} ${active} ist ${ahead} Commit(s) vor origin — nicht gepusht"
+                echo -e "  ${YELLOW}↑${RESET} ${active} is ${ahead} commit(s) ahead of origin — not pushed"
             else
-                echo -e "  ${GREEN}✓${RESET} ${active} ist aktuell"
+                echo -e "  ${GREEN}✓${RESET} ${active} is up to date"
             fi
         else
-            echo -e "  ${YELLOW}~${RESET} ${active}: Remote nicht erreichbar"
+            echo -e "  ${YELLOW}~${RESET} ${active}: remote unreachable"
         fi
         echo ""
     fi
@@ -187,8 +187,8 @@ status() {
 
 _show_urls() {
     echo ""
-    echo -e "  ${GREEN}●${RESET} Vorschau (dynamisch)  →  ${BOLD}http://localhost:8080${RESET}"
-    echo -e "  ${GREEN}●${RESET} Vorschau (statisch)   →  ${BOLD}http://localhost:8081${RESET}"
+    echo -e "  ${GREEN}●${RESET} Preview (dynamic)  →  ${BOLD}http://localhost:8080${RESET}"
+    echo -e "  ${GREEN}●${RESET} Preview (static)   →  ${BOLD}http://localhost:8081${RESET}"
     echo ""
 }
 
@@ -198,7 +198,7 @@ run_bp() {
     check_docker
 
     if ! is_running; then
-        err "BonsaiPress läuft nicht. Zuerst: bonsai start"
+        err "BonsaiPress is not running. First: bonsai start"
         exit 1
     fi
 
@@ -214,8 +214,8 @@ list_cmd() {
     active="$(_get_active)"
 
     if [[ ! -s "$PROJECTS_FILE" ]]; then
-        warn "Keine Projekte registriert."
-        echo "  Projekt hinzufügen: bonsai add <name> <git-url>"
+        warn "No projects registered."
+        echo "  Add a project: bonsai add <name> <git-url>"
         return
     fi
 
@@ -235,9 +235,9 @@ list_cmd() {
         if [[ -d "$client_dir/.git" ]]; then
             local last
             last=$(git -C "$client_dir" log -1 --format="%cr" 2>/dev/null || echo "?")
-            extra="lokal  (letzter Commit: $last)"
+            extra="local  (last commit: $last)"
         else
-            extra="${YELLOW}→ wird beim Switch geklont${RESET}"
+            extra="${YELLOW}→ will be cloned on switch${RESET}"
         fi
 
         echo -e "  ${color}${marker} ${BOLD}${name}${RESET}"
@@ -252,14 +252,14 @@ switch_cmd() {
     _config_init
 
     if [[ -z "$name" ]]; then
-        err "Projektname fehlt. Beispiel: bonsai switch mykunde"
+        err "Project name missing. Example: bonsai switch myclient"
         exit 1
     fi
 
     if ! _project_exists "$name"; then
-        err "Projekt '$name' nicht registriert."
-        echo "  Verfügbare Projekte: bonsai list"
-        echo "  Neu registrieren:    bonsai add $name <git-url>"
+        err "Project '$name' not registered."
+        echo "  Available projects: bonsai list"
+        echo "  Register it:        bonsai add $name <git-url>"
         exit 1
     fi
 
@@ -267,7 +267,7 @@ switch_cmd() {
     active="$(_get_active)"
 
     if [[ "$name" == "$active" && -L "$SCRIPT_DIR/current" ]]; then
-        ok "Projekt '$name' ist bereits aktiv."
+        ok "Project '$name' is already active."
         return
     fi
 
@@ -276,11 +276,11 @@ switch_cmd() {
         local changes
         changes=$(git -C "$CLIENTS_DIR/$active" status --porcelain 2>/dev/null)
         if [[ -n "$changes" ]]; then
-            err "Projekt '$active' hat nicht committete Änderungen:"
+            err "Project '$active' has uncommitted changes:"
             echo ""
             git -C "$CLIENTS_DIR/$active" status --short
             echo ""
-            err "Bitte erst committen oder stashen."
+            err "Please commit or stash first."
             exit 1
         fi
     fi
@@ -291,54 +291,54 @@ switch_cmd() {
 
     if [[ ! -d "$client_dir/.git" ]]; then
         # First time: clone from remote
-        info "Erstes Mal — klone '$name'..."
+        info "First time — cloning '$name'..."
         if ! git clone "$git_url" "$client_dir"; then
-            err "Clone fehlgeschlagen."
+            err "Clone failed."
             exit 1
         fi
         git -C "$client_dir" submodule update --init --recursive --quiet
-        ok "Geklont."
+        ok "Cloned."
     else
         # Cached: try to fetch
-        info "Prüfe Remote..."
+        info "Checking remote..."
         if timeout 10 git -C "$client_dir" fetch --quiet 2>/dev/null; then
             local behind
             behind=$(git -C "$client_dir" rev-list "HEAD..@{u}" --count 2>/dev/null || echo "0")
             if [[ "$behind" -gt 0 ]]; then
-                warn "$behind neue Commits auf Remote."
-                read -r -p "  Git pull durchführen? [J/n] " answer
-                if [[ "${answer:-J}" =~ ^[Jj]$ ]]; then
+                warn "$behind new commit(s) on remote."
+                read -r -p "  Run git pull? [Y/n] " answer
+                if [[ "${answer:-Y}" =~ ^[Yy]$ ]]; then
                     git -C "$client_dir" pull --quiet
                     git -C "$client_dir" submodule update --init --recursive --quiet
-                    ok "Aktualisiert."
+                    ok "Updated."
                 fi
             else
-                ok "Lokal aktuell."
+                ok "Locally up to date."
                 git -C "$client_dir" submodule update --init --recursive --quiet
             fi
         else
             local last
-            last=$(git -C "$client_dir" log -1 --format="%cr" 2>/dev/null || echo "unbekannt")
-            warn "Remote nicht erreichbar — nutze lokalen Cache."
-            echo -e "  ℹ Letzter Stand: $last"
-            read -r -p "  Trotzdem wechseln? [J/n] " answer
-            if [[ ! "${answer:-J}" =~ ^[Jj]$ ]]; then
-                echo "Abgebrochen."
+            last=$(git -C "$client_dir" log -1 --format="%cr" 2>/dev/null || echo "unknown")
+            warn "Remote unreachable — using local cache."
+            echo -e "  ℹ Last known state: $last"
+            read -r -p "  Switch anyway? [Y/n] " answer
+            if [[ ! "${answer:-Y}" =~ ^[Yy]$ ]]; then
+                echo "Cancelled."
                 exit 0
             fi
         fi
     fi
 
     # Update symlink and active marker
-    info "Wechsle zu '$name'..."
+    info "Switching to '$name'..."
 
     # If current/ is a real directory (not yet a symlink), check for changes and remove
     if [[ -d "$SCRIPT_DIR/current" && ! -L "$SCRIPT_DIR/current" ]]; then
         local dirty
         dirty=$(git -C "$SCRIPT_DIR/current" status --porcelain 2>/dev/null)
         if [[ -n "$dirty" ]]; then
-            err "current/ ist noch kein Symlink und hat uncommittete Änderungen."
-            err "Bitte erst in current/ committen und pushen, dann nochmal switch."
+            err "current/ is not yet a symlink and has uncommitted changes."
+            err "Please commit and push in current/ first, then switch again."
             exit 1
         fi
         rm -rf "$SCRIPT_DIR/current"
@@ -353,11 +353,11 @@ switch_cmd() {
         local bs_version
         bs_version=$(tr -d '"' < "$bs_version_file" | tr -d '[:space:]')
         if [[ -n "$bs_version" ]]; then
-            info "Bootstrap: checkout $bs_version..."
+            info "Bootstrap: checking out $bs_version..."
             if git -C "$SCRIPT_DIR/cms/bootstrap" checkout "$bs_version" --quiet 2>/dev/null; then
-                ok "Bootstrap $bs_version aktiv."
+                ok "Bootstrap $bs_version active."
             else
-                warn "Bootstrap-Version '$bs_version' nicht gefunden — bleibt auf aktuellem Stand."
+                warn "Bootstrap version '$bs_version' not found — staying on current version."
             fi
         fi
     fi
@@ -365,7 +365,7 @@ switch_cmd() {
     _restart_if_running
 
     echo ""
-    ok "Aktives Projekt: ${BOLD}$name${RESET}"
+    ok "Active project: ${BOLD}$name${RESET}"
     _show_urls
 }
 
@@ -374,18 +374,18 @@ add_cmd() {
     _config_init
 
     if [[ -z "$name" || -z "$git_url" ]]; then
-        err "Verwendung: bonsai add <name> <git-url>"
+        err "Usage: bonsai add <name> <git-url>"
         exit 1
     fi
 
     if _project_exists "$name"; then
-        err "Projekt '$name' ist bereits registriert."
+        err "Project '$name' is already registered."
         exit 1
     fi
 
     echo "$name $git_url" >> "$PROJECTS_FILE"
-    ok "Projekt '$name' registriert."
-    echo "  Wechseln mit: bonsai switch $name"
+    ok "Project '$name' registered."
+    echo "  Switch with: bonsai switch $name"
 }
 
 remove_cmd() {
@@ -393,19 +393,19 @@ remove_cmd() {
     _config_init
 
     if [[ -z "$name" ]]; then
-        err "Verwendung: bonsai remove <name>"
+        err "Usage: bonsai remove <name>"
         exit 1
     fi
 
     if ! _project_exists "$name"; then
-        err "Projekt '$name' nicht gefunden."
+        err "Project '$name' not found."
         exit 1
     fi
 
     local active
     active="$(_get_active)"
     if [[ "$name" == "$active" ]]; then
-        err "Kann aktives Projekt nicht entfernen. Erst zu einem anderen wechseln."
+        err "Cannot remove the active project. Switch to another one first."
         exit 1
     fi
 
@@ -415,14 +415,14 @@ remove_cmd() {
     mv "$tmpfile" "$PROJECTS_FILE"
 
     if [[ -d "$CLIENTS_DIR/$name" ]]; then
-        read -r -p "  Lokalen Cache auch löschen? [j/N] " answer
-        if [[ "${answer:-N}" =~ ^[Jj]$ ]]; then
+        read -r -p "  Also delete local cache? [y/N] " answer
+        if [[ "${answer:-N}" =~ ^[Yy]$ ]]; then
             rm -rf "${CLIENTS_DIR:?}/$name"
-            ok "Cache gelöscht."
+            ok "Cache deleted."
         fi
     fi
 
-    ok "Projekt '$name' entfernt."
+    ok "Project '$name' removed."
 }
 
 # --- New project ---
@@ -431,33 +431,33 @@ new_cmd() {
     local name="${1:-}" remote_url="${2:-}"
     _config_init
 
-    [[ -z "$name" ]] && { err "Verwendung: bonsai new <name> [<remote-url>]"; exit 1; }
-    _project_exists "$name" && { err "Projekt '$name' ist bereits registriert."; exit 1; }
+    [[ -z "$name" ]] && { err "Usage: bonsai new <name> [<remote-url>]"; exit 1; }
+    _project_exists "$name" && { err "Project '$name' is already registered."; exit 1; }
 
     local client_dir="$CLIENTS_DIR/$name"
-    [[ -d "$client_dir" ]] && { err "Verzeichnis '$client_dir' existiert bereits."; exit 1; }
+    [[ -d "$client_dir" ]] && { err "Directory '$client_dir' already exists."; exit 1; }
 
     # Template URL aus ~/.config/bonsai/config (BONSAI_TEMPLATE=...)
     local config_file="$BONSAI_CONFIG/config"
     local template_url=""
     [[ -f "$config_file" ]] && template_url=$(grep "^BONSAI_TEMPLATE=" "$config_file" | cut -d= -f2-)
     if [[ -z "$template_url" ]]; then
-        err "Kein Template konfiguriert. Bitte in '$config_file' eintragen:"
+        err "No template configured. Please add this to '$config_file':"
         echo "  BONSAI_TEMPLATE=git@github.com:user/bonsai-template.git"
         exit 1
     fi
 
     # Template klonen, Git-History entfernen
-    info "Klone Template..."
-    git clone "$template_url" "$client_dir" || { err "Clone fehlgeschlagen."; exit 1; }
+    info "Cloning template..."
+    git clone "$template_url" "$client_dir" || { err "Clone failed."; exit 1; }
     git -C "$client_dir" submodule update --init --recursive --quiet
     rm -rf "$client_dir/.git"
     git -C "$client_dir" init
-    ok "Git initialisiert."
+    ok "Git initialized."
 
     # Remote-URL (Argument oder interaktiv)
     if [[ -z "$remote_url" ]]; then
-        read -r -p "  Remote-URL für '$name' (Enter = kein Remote): " remote_url
+        read -r -p "  Remote URL for '$name' (Enter = no remote): " remote_url
     fi
     if [[ -n "$remote_url" ]]; then
         git -C "$client_dir" remote add origin "$remote_url"
@@ -467,11 +467,11 @@ new_cmd() {
     # Initialer Commit
     git -C "$client_dir" add -A
     git -C "$client_dir" commit -m "Initial commit"
-    ok "Initialer Commit erstellt."
+    ok "Initial commit created."
 
     # In projects.conf registrieren
     echo "$name ${remote_url:--}" >> "$PROJECTS_FILE"
-    ok "Projekt '$name' registriert."
+    ok "Project '$name' registered."
 
     # Automatisch wechseln (außer aktives Projekt hat uncommittete Änderungen)
     local active do_switch=1
@@ -480,8 +480,8 @@ new_cmd() {
         local changes
         changes=$(git -C "$CLIENTS_DIR/$active" status --porcelain 2>/dev/null)
         if [[ -n "$changes" ]]; then
-            warn "Aktives Projekt '$active' hat uncommittete Änderungen — nicht automatisch gewechselt."
-            echo "  Wechseln mit: bonsai switch $name"
+            warn "Active project '$active' has uncommitted changes — not switching automatically."
+            echo "  Switch with: bonsai switch $name"
             do_switch=0
         fi
     fi
@@ -491,26 +491,26 @@ new_cmd() {
         _set_active "$name"
         _restart_if_running
         echo ""
-        ok "Aktives Projekt: ${BOLD}$name${RESET}"
+        ok "Active project: ${BOLD}$name${RESET}"
         _show_urls
     fi
 
     # Checklist für neue Nutzer
     echo ""
-    info "Nächste Schritte:"
-    echo -e "  1. ${BOLD}current/config/bonsai_config.php${RESET} ausfüllen (FTP, Domain)"
-    echo -e "     ${YELLOW}⚠  Enthält Passwörter — bereits in .gitignore, nie committen!${RESET}"
-    echo -e "  2. ${BOLD}bonsai static${RESET}   — statische HTML generieren"
-    echo -e "  3. ${BOLD}bonsai deploy${RESET}   — deployen (legt web/ + include/ auf Server automatisch an)"
+    info "Next steps:"
+    echo -e "  1. Fill in ${BOLD}current/config/bonsai_config.php${RESET} (FTP, domain)"
+    echo -e "     ${YELLOW}⚠  Contains passwords — already in .gitignore, never commit!${RESET}"
+    echo -e "  2. ${BOLD}bonsai static${RESET}   — generate static HTML"
+    echo -e "  3. ${BOLD}bonsai deploy${RESET}   — deploy (creates web/ + include/ on the server automatically)"
     echo -e "  4. CI/CD optional:  ${BOLD}https://github.com/Agundur-KDE/ftp-hash-deploy-action${RESET}"
-    echo -e "     Ersetzt 'bonsai deploy' in GitHub Actions"
+    echo -e "     Replaces 'bonsai deploy' in GitHub Actions"
     echo ""
 
     # Push anbieten
     if [[ -n "$remote_url" ]]; then
-        read -r -p "  Jetzt pushen? [J/n] " answer
-        if [[ "${answer:-J}" =~ ^[Jj]$ ]]; then
-            git -C "$client_dir" push -u origin HEAD || warn "Push fehlgeschlagen."
+        read -r -p "  Push now? [Y/n] " answer
+        if [[ "${answer:-Y}" =~ ^[Yy]$ ]]; then
+            git -C "$client_dir" push -u origin HEAD || warn "Push failed."
         fi
     fi
 }
@@ -529,20 +529,20 @@ install_cmd() {
     done
 
     if [[ -z "$target" ]]; then
-        err "Kein geeignetes Verzeichnis in PATH (~/.local/bin oder ~/bin)."
-        err "Symlink manuell erstellen: ln -s $self ~/.local/bin/bonsai"
+        err "No suitable directory found in PATH (~/.local/bin or ~/bin)."
+        err "Create the symlink manually: ln -s $self ~/.local/bin/bonsai"
         exit 1
     fi
 
     if [[ -L "$target" ]]; then
         ln -sf "$self" "$target"
-        ok "Aktualisiert: $target"
+        ok "Updated: $target"
         return
     fi
 
     ln -s "$self" "$target"
-    ok "Installiert: $target"
-    ok "Du kannst jetzt überall 'bonsai' tippen."
+    ok "Installed: $target"
+    ok "You can now type 'bonsai' anywhere."
 }
 
 # --- Help ---
@@ -551,24 +551,24 @@ help_cmd() {
     echo ""
     echo -e "  ${BOLD}BonsaiPress${RESET}"
     echo ""
-    echo "  bonsai start                   System starten"
-    echo "  bonsai stop                    System stoppen"
-    echo "  bonsai restart                 Neustart"
-    echo "  bonsai status                  Status und URLs anzeigen"
+    echo "  bonsai start                   Start the system"
+    echo "  bonsai stop                    Stop the system"
+    echo "  bonsai restart                 Restart"
+    echo "  bonsai status                  Show status and URLs"
     echo ""
-    echo "  bonsai list                    Alle Projekte anzeigen"
-    echo "  bonsai new <name> [<url>]      Neues Projekt aus Template anlegen"
-    echo "  bonsai switch <name>           Zu Projekt wechseln"
-    echo "  bonsai add <name> <git-url>    Projekt registrieren"
-    echo "  bonsai remove <name>           Projekt entfernen"
+    echo "  bonsai list                    Show all projects"
+    echo "  bonsai new <name> [<url>]      Create a new project from the template"
+    echo "  bonsai switch <name>           Switch to a project"
+    echo "  bonsai add <name> <git-url>    Register a project"
+    echo "  bonsai remove <name>           Remove a project"
     echo ""
-    echo "  bonsai static                  Statischen Export bauen"
-    echo "  bonsai deploy                  Auf Server deployen"
-    echo "  bonsai deploy -d               Deploy Vorschau (dry-run)"
+    echo "  bonsai static                  Build the static export"
+    echo "  bonsai deploy                  Deploy to the server"
+    echo "  bonsai deploy -d               Preview deploy (dry-run)"
     echo ""
-    echo "  bonsai version                 Version anzeigen"
-    echo "  bonsai update                  Docker-Images aktualisieren"
-    echo "  bonsai install                 Einmalig: 'bonsai' überall verfügbar machen"
+    echo "  bonsai version                 Show version"
+    echo "  bonsai update                  Update Docker images"
+    echo "  bonsai install                 One-time: make 'bonsai' available everywhere"
     echo ""
 }
 
@@ -586,13 +586,13 @@ version_cmd() {
 
 update_cmd() {
     check_docker
-    info "Docker-Images werden aktualisiert..."
+    info "Updating Docker images..."
     docker compose -f "$COMPOSE_FILE" pull
-    ok "Images aktuell."
+    ok "Images up to date."
     if is_running; then
-        info "Container werden neu gestartet..."
+        info "Restarting containers..."
         docker compose -f "$COMPOSE_FILE" up -d
-        ok "Fertig."
+        ok "Done."
     fi
 }
 
@@ -657,20 +657,20 @@ case "${1:-help}" in
         # betroffen — cms/ selbst hat keine. Bricht den Deploy ab, wenn composer audit
         # eine bekannte Sicherheitslücke in einer Dependency findet.
         if [ -f current/include/composer.json ]; then
-            info "Composer-Security-Audit (current/include)..."
+            info "Composer security audit (current/include)..."
             if ! (cd current/include && composer audit --no-interaction); then
-                err "composer audit hat Sicherheitslücken gefunden — Deploy abgebrochen."
+                err "composer audit found security vulnerabilities — deploy aborted."
                 exit 1
             fi
-            ok "Keine bekannten Sicherheitslücken."
+            ok "No known vulnerabilities."
         fi
         run_bp deploy "$@"
         ;;
     install)        install_cmd ;;
     help|--help|-h) help_cmd ;;
     *)
-        err "Unbekannter Befehl: ${1}"
-        echo "  Hilfe: bonsai help"
+        err "Unknown command: ${1}"
+        echo "  Help: bonsai help"
         exit 1
         ;;
 esac
