@@ -50,6 +50,73 @@ bonsai start        # pulls images, starts Docker — demo on :8080
 
 Open [http://localhost:8080](http://localhost:8080).
 
+## Install
+
+> Everything runs inside Docker — PHP, Apache, Composer dependencies, the Sass watcher. You don't need PHP, Composer, or Apache installed on your machine, only **Docker** and **Git**.
+
+### Step by step
+
+1. **Install Docker** — [Docker Desktop](https://www.docker.com/products/docker-desktop) (Mac/Windows) or Docker Engine + Compose plugin (Linux). Make sure it's actually running (`docker info` should not error).
+2. **Install Git** if you don't have it already.
+3. **Clone the repo:**
+   ```bash
+   git clone https://github.com/Agundur-KDE/BonsaiPress2.git
+   cd BonsaiPress2
+   ```
+4. **Register the `bonsai` CLI on your PATH:**
+   ```bash
+   ./bonsai install
+   ```
+   This symlinks `bonsai` into `~/.local/bin` or `~/bin` — whichever is already on your `PATH`. If neither is, the command tells you and prints the manual symlink command to run instead.
+5. **Start the stack:**
+   ```bash
+   bonsai start
+   ```
+   First run pulls the `bonsaipress` and `bonsaipress-watcher` images from `ghcr.io/agundur-kde` (a few hundred MB) and boots three containers: CMS (`:8080`), Preview (`:8081`), Watcher (`:8001`).
+6. **Open [http://localhost:8080](http://localhost:8080)** — you should see the demo project.
+7. **Create your own project** (optional, once you're past the demo):
+   ```bash
+   bonsai new myclient
+   ```
+   Fill in `current/config/bonsai_config.php` with FTP credentials before deploying.
+
+### Troubleshooting
+
+**`docker: command not found`**
+Docker isn't installed, or your shell doesn't see it yet. Install Docker Desktop / Engine, then open a new terminal.
+
+**`Docker läuft nicht. Bitte Docker Desktop starten.`**
+Docker is installed but the daemon isn't running. Start Docker Desktop (or on Linux: `sudo systemctl start docker`), then re-run `bonsai start`.
+
+**`bonsai: command not found` after `./bonsai install`**
+Your `PATH` doesn't include `~/.local/bin` or `~/bin`, so the installer couldn't place the symlink and printed a manual `ln -s` command instead — scroll up and run it, or add `~/.local/bin` to your `PATH` and re-run `./bonsai install`. Until then, keep invoking it as `./bonsai <command>` from the repo root.
+
+**Port 8080 / 8081 / 8001 already in use**
+Something else on your machine is bound to one of those ports. Stop it, or edit the port mappings in `compose.yml` (e.g. `"8080:80"` → `"9090:80"`).
+
+**Permission denied on files under `clients/` or `current/`**
+`bonsai` writes your host UID/GID into `.env` on every run so the container matches your user. If you ever ran the containers with plain `docker compose` (bypassing the `bonsai` wrapper), files may have been created as `root`. Fix with:
+```bash
+sudo chown -R $(id -u):$(id -g) clients/ current/
+```
+then always drive the stack via `bonsai ...`, not raw `docker compose`.
+
+**Image pull fails / `unauthorized` from `ghcr.io`**
+The images are public — a failed pull is usually a network issue or Docker Hub/GHCR rate limiting. Retry with `bonsai start`; if it persists, check `docker login ghcr.io` isn't caching bad credentials (`docker logout ghcr.io` and retry).
+
+**Changes to content don't show up**
+Static pages need an explicit rebuild — the CMS container doesn't auto-render:
+```bash
+bonsai static     # regenerate static HTML
+```
+Then check the **preview** on `:8081`, not `:8080` (`:8080` serves the live CMS, `:8081` serves the static build).
+
+**`bonsai deploy` fails with an FTP/connection error**
+Check `current/config/bonsai_config.php` for correct host/user/password. BonsaiPress uses explicit FTPS on port 21 — make sure your hosting firewall allows it and that you're not behind a proxy blocking outbound FTP.
+
+**Still stuck?**
+Run `bonsai status` for a quick health check, or [open an issue](https://github.com/Agundur-KDE/BonsaiPress2/issues) with the output of `docker compose -f compose.yml ps` and any error text.
+
 ## Workflow
 
 ```bash
