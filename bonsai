@@ -624,11 +624,11 @@ case "${1:-help}" in
             --load-path=cms/bootstrap/scss \
             --load-path=current/config/sass \
             current/config/sass/main.scss:current/static/_resources/css/main.css.new
-        if [ -f current/static/_resources/css/main.css.new ]; then
-            if ! cmp -s current/static/_resources/css/main.css.new current/static/_resources/css/main.css 2>/dev/null; then
-                mv current/static/_resources/css/main.css.new current/static/_resources/css/main.css
+        if [ -f "$SCRIPT_DIR/current/static/_resources/css/main.css.new" ]; then
+            if ! cmp -s "$SCRIPT_DIR/current/static/_resources/css/main.css.new" "$SCRIPT_DIR/current/static/_resources/css/main.css" 2>/dev/null; then
+                mv "$SCRIPT_DIR/current/static/_resources/css/main.css.new" "$SCRIPT_DIR/current/static/_resources/css/main.css"
             else
-                rm current/static/_resources/css/main.css.new
+                rm "$SCRIPT_DIR/current/static/_resources/css/main.css.new"
             fi
         fi
         # main.dev.css (Sourcemap-Variante für :8080, sass_create_map) darf nie
@@ -636,23 +636,23 @@ case "${1:-help}" in
         # main.css.watcher.new: Staging-Datei des Watchers (eigener Name, damit
         # sie nie mit main.css.new hier kollidiert) — falls der Watcher-Prozess
         # mitten im Schreiben unterbrochen wurde, nie exportieren.
-        rm -f current/static/_resources/css/main.dev.css \
-              current/static/_resources/css/main.dev.css.new \
-              current/static/_resources/css/main.dev.css.map \
-              current/static/_resources/css/main.dev.css.new.map \
-              current/static/_resources/css/main.css.watcher.new
+        rm -f "$SCRIPT_DIR/current/static/_resources/css/main.dev.css" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.new" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.map" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.new.map" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.css.watcher.new"
         run_bp static "$@"
         ;;
     deploy)
         shift
         # main.css.new: Reste eines abgebrochenen static-Laufs. main.dev.css +
         # main.css.watcher.new: dürfen nie auf den Server, siehe static)-Block.
-        rm -f current/static/_resources/css/main.css.new \
-              current/static/_resources/css/main.css.watcher.new \
-              current/static/_resources/css/main.dev.css \
-              current/static/_resources/css/main.dev.css.new \
-              current/static/_resources/css/main.dev.css.map \
-              current/static/_resources/css/main.dev.css.new.map
+        rm -f "$SCRIPT_DIR/current/static/_resources/css/main.css.new" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.css.watcher.new" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.new" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.map" \
+              "$SCRIPT_DIR/current/static/_resources/css/main.dev.css.new.map"
         # Nur Clients mit eigenen Composer-Dependencies (current/include/composer.json)
         # betroffen — cms/ selbst hat keine. Bricht den Deploy ab, wenn composer audit
         # eine bekannte Sicherheitslücke in einer Dependency findet.
