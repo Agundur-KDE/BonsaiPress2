@@ -78,6 +78,72 @@ is_running() {
     docker compose -f "$COMPOSE_FILE" ps --status running 2>/dev/null | grep -q "cms"
 }
 
+# Remove only this Compose project's containers when their stored network ID
+# no longer exists. This can happen after Docker cleanup/pruning or a daemon
+# restart while stopped containers still reference the old network metadata.
+_repair_network() {
+    local -a container_ids=()
+    local -a network_names=()
+    local id network network_id actual_id
+    local stale_network=0
+    declare -A seen_networks=()
+
+    mapfile -t container_ids < <(docker compose -f "$COMPOSE_FILE" ps -aq 2>/dev/null)
+    if [[ ${#container_ids[@]} -eq 0 ]]; then
+        info "No BonsaiPress containers need network repair."
+        return 0
+    fi
+
+    for id in "${container_ids[@]}"; do
+        while read -r network network_id; do
+            [[ -z "$network" || -n "${seen_networks[$network]:-}" ]] && continue
+            seen_networks["$network"]=1
+            network_names+=("$network")
+            actual_id=$(docker network inspect --format '{{.Id}}' "$network" 2>/dev/null || true)
+            if [[ -z "$actual_id" || "$actual_id" != "$network_id" ]]; then
+                stale_network=1
+            fi
+        done < <(docker inspect --format '{{range $name, $network := .NetworkSettings.Networks}}{{println $name $network.NetworkID}}{{end}}' "$id" 2>/dev/null)
+    done
+
+    if [[ "$stale_network" -eq 0 ]]; then
+        info "BonsaiPress Docker network is healthy."
+        return 0
+    fi
+
+    info "Removing stale BonsaiPress containers..."
+    docker rm -f "${container_ids[@]}" >/dev/null
+
+    for network in "${network_names[@]}"; do
+        if docker network inspect "$network" >/dev/null 2>&1; then
+            info "Removing old Docker network: $network"
+            docker network rm "$network" >/dev/null || {
+                err "Could not remove Docker network: $network"
+                return 1
+            }
+        fi
+    done
+}
+
+_compose_up() {
+    local log_file=/tmp/bonsai-start.log
+
+    if docker compose -f "$COMPOSE_FILE" up -d >"$log_file" 2>&1; then
+        return 0
+    fi
+
+    # A container can retain a network ID that Docker has already deleted.
+    # Compose then fails before it gets a chance to recreate the container.
+    if grep -Eqi 'network .* not found|failed to set up container networking' "$log_file"; then
+        warn "Stale Docker network metadata detected — repairing BonsaiPress network..."
+        _repair_network || return 1
+        docker compose -f "$COMPOSE_FILE" up -d >"$log_file" 2>&1
+        return $?
+    fi
+
+    return 1
+}
+
 _restart_if_running() {
     command -v docker &>/dev/null && docker info &>/dev/null 2>&1 || return
     if is_running; then
@@ -127,13 +193,32 @@ start() {
     export SASS_CREATE_MAP="${SASS_CREATE_MAP:-false}"
 
     info "BonsaiPress starting..."
-    docker compose -f "$COMPOSE_FILE" up -d > /tmp/bonsai-start.log 2>&1 || {
+    _compose_up || {
         err "Error starting:"
         cat /tmp/bonsai-start.log
         exit 1
     }
 
     ok "Ready."
+    _show_urls
+}
+
+repair() {
+    check_docker
+
+    info "Checking BonsaiPress Docker network..."
+    _repair_network || {
+        err "Network repair failed."
+        exit 1
+    }
+
+    info "Starting BonsaiPress after network repair..."
+    _compose_up || {
+        err "Error starting after repair:"
+        cat /tmp/bonsai-start.log
+        exit 1
+    }
+    ok "BonsaiPress network repaired."
     _show_urls
 }
 
@@ -554,6 +639,7 @@ help_cmd() {
     echo "  bonsai start                   Start the system"
     echo "  bonsai stop                    Stop the system"
     echo "  bonsai restart                 Restart"
+    echo "  bonsai repair                  Repair stale Docker network state"
     echo "  bonsai status                  Show status and URLs"
     echo ""
     echo "  bonsai list                    Show all projects"
@@ -602,6 +688,7 @@ case "${1:-help}" in
     start)          start ;;
     stop)           stop ;;
     restart)        stop; start ;;
+    repair)         repair ;;
     version|--version|-v) version_cmd ;;
     update)         update_cmd ;;
     status)         status ;;

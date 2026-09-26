@@ -160,11 +160,22 @@ Check `current/config/bonsai_config.php` for correct host/user/password. BonsaiP
 **Still stuck?**
 Run `bonsai status` for a quick health check, or [open an issue](https://github.com/Agundur-KDE/BonsaiPress2/issues) with the output of `docker compose -f compose.yml ps` and any error text.
 
+**`network ... not found` while starting**
+Docker can remove the project network while stopped Compose containers still
+retain its old network ID. `bonsai start` detects this exact condition and
+repairs it automatically. To trigger the same repair explicitly, run:
+```bash
+bonsai repair
+```
+This removes and recreates only the containers and networks belonging to the
+BonsaiPress Compose project, then starts the stack again.
+
 ## Workflow
 
 ```bash
 bonsai start                   # Docker up: CMS :8080, Preview :8081, Watcher :8001
 bonsai stop                    # Docker down
+bonsai repair                  # Repair stale Docker network state
 bonsai status                  # Show status and URLs
 
 bonsai new myclient            # New project from template, git-ready
