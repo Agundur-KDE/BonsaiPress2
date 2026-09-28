@@ -6,6 +6,9 @@ CLIENTS_DIR="$SCRIPT_DIR/clients"
 PROJECTS_FILE="$BONSAI_CONFIG/projects.conf"
 ACTIVE_FILE="$BONSAI_CONFIG/active"
 DEMO_REPO="https://github.com/Agundur-KDE/DEMO.git"
+# Public starter template used by `bonsai new` when no user override exists.
+# Keep this on HTTPS so creating a project never requires a GitHub SSH key.
+DEFAULT_TEMPLATE="https://github.com/Agundur-KDE/emptyContent.git"
 
 # Dev mode: cms/ exists locally (git clone) — use compose.dev.yml with local build
 # Standalone mode: cms/ is baked into the Docker image — use compose.yml (slim)
@@ -522,14 +525,14 @@ new_cmd() {
     local client_dir="$CLIENTS_DIR/$name"
     [[ -d "$client_dir" ]] && { err "Directory '$client_dir' already exists."; exit 1; }
 
-    # Template URL aus ~/.config/bonsai/config (BONSAI_TEMPLATE=...)
+    # Optional override from ~/.config/bonsai/config (BONSAI_TEMPLATE=...).
+    # The public HTTPS template is the default and needs no GitHub SSH key.
     local config_file="$BONSAI_CONFIG/config"
-    local template_url=""
+    local template_url="$DEFAULT_TEMPLATE"
     [[ -f "$config_file" ]] && template_url=$(grep "^BONSAI_TEMPLATE=" "$config_file" | cut -d= -f2-)
-    if [[ -z "$template_url" ]]; then
-        err "No template configured. Please add this to '$config_file':"
-        echo "  BONSAI_TEMPLATE=git@github.com:user/bonsai-template.git"
-        exit 1
+    # Migrate the old documented SSH URL transparently for existing users.
+    if [[ -z "$template_url" || "$template_url" == "git@github.com:Agundur-KDE/emptyContent.git" ]]; then
+        template_url="$DEFAULT_TEMPLATE"
     fi
 
     # Template klonen, Git-History entfernen

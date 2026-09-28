@@ -215,8 +215,12 @@ current/  (a client project)
 ## New client project
 
 ```bash
-# Configure the template repo once
-echo "BONSAI_TEMPLATE=git@github.com:Agundur-KDE/emptyContent.git" \
+# `bonsai new` uses the public starter template automatically:
+# https://github.com/Agundur-KDE/emptyContent
+# No per-user configuration or GitHub SSH key is required.
+
+# Optional: override the default template for your own setup
+echo "BONSAI_TEMPLATE=https://github.com/yourorg/your-template.git" \
   >> ~/.config/bonsai/config
 
 bonsai new myclient git@github.com:yourorg/myclient.git
