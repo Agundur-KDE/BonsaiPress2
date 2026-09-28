@@ -84,6 +84,24 @@ _ensure_submodules() {
     }
 }
 
+_ensure_client_defaults() {
+    local client_dir="$1"
+    local starter_sass="$SCRIPT_DIR/templates/client/config/sass/main.scss"
+    local starter_bootstrap_version="$SCRIPT_DIR/templates/client/config/bootstrap-version.txt"
+
+    if [[ ! -f "$client_dir/config/sass/main.scss" && -f "$starter_sass" ]]; then
+        mkdir -p "$client_dir/config/sass"
+        cp "$starter_sass" "$client_dir/config/sass/main.scss"
+        ok "Added starter Sass: config/sass/main.scss"
+    fi
+
+    if [[ ! -f "$client_dir/config/bootstrap-version.txt" && -f "$starter_bootstrap_version" ]]; then
+        mkdir -p "$client_dir/config"
+        cp "$starter_bootstrap_version" "$client_dir/config/bootstrap-version.txt"
+        ok "Added Bootstrap version: config/bootstrap-version.txt"
+    fi
+}
+
 # --- Docker helpers ---
 
 check_docker() {
@@ -191,6 +209,7 @@ _ensure_demo() {
     local demo_dir="$CLIENTS_DIR/DEMO"
     info "No project active — loading demo..."
     git clone "$DEMO_REPO" "$demo_dir" 2>/dev/null || { err "Demo clone failed (no internet?)."; exit 1; }
+    _ensure_client_defaults "$demo_dir"
     _project_exists "DEMO" || echo "DEMO $DEMO_REPO" >> "$PROJECTS_FILE"
     ln -sfn "clients/DEMO" "$SCRIPT_DIR/current"
     _set_active "DEMO"
@@ -568,19 +587,7 @@ new_cmd() {
     # Keep fresh clients compatible with `bonsai static`. Preserve a template's
     # own Sass entrypoint, but provide the standard Bootstrap starter when it is
     # absent from a minimal template such as emptyContent.
-    local starter_sass="$SCRIPT_DIR/templates/client/config/sass/main.scss"
-    if [[ ! -f "$client_dir/config/sass/main.scss" && -f "$starter_sass" ]]; then
-        mkdir -p "$client_dir/config/sass"
-        cp "$starter_sass" "$client_dir/config/sass/main.scss"
-        ok "Added starter Sass: config/sass/main.scss"
-    fi
-
-    local starter_bootstrap_version="$SCRIPT_DIR/templates/client/config/bootstrap-version.txt"
-    if [[ ! -f "$client_dir/config/bootstrap-version.txt" && -f "$starter_bootstrap_version" ]]; then
-        mkdir -p "$client_dir/config"
-        cp "$starter_bootstrap_version" "$client_dir/config/bootstrap-version.txt"
-        ok "Added Bootstrap version: config/bootstrap-version.txt"
-    fi
+    _ensure_client_defaults "$client_dir"
 
     git -C "$client_dir" init
     ok "Git initialized."
@@ -761,6 +768,10 @@ case "${1:-help}" in
     remove)         shift; remove_cmd "$@" ;;
     static)
         shift
+        if [[ ! -f "$SCRIPT_DIR/current/config/sass/main.scss" ]]; then
+            err "Missing current/config/sass/main.scss — cannot build static CSS."
+            exit 1
+        fi
         # prod-CSS vor dem Export: kein source-map, komprimiert.
         # In main.css.new bauen und nur übernehmen wenn sich der Inhalt
         # wirklich geändert hat — sonst bumpt main.css bei jedem Lauf seine
