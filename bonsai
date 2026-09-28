@@ -624,12 +624,7 @@ new_cmd() {
     fi
 
     if [[ "$do_switch" -eq 1 ]]; then
-        ln -sfn "clients/$name" "$SCRIPT_DIR/current"
-        _set_active "$name"
-        _restart_if_running
-        echo ""
-        ok "Active project: ${BOLD}$name${RESET}"
-        _show_urls
+        switch_cmd "$name"
     fi
 
     # Checklist für neue Nutzer
