@@ -21,6 +21,8 @@ RUN echo '<Directory /var/www>\n\
 # Bake CMS core + dependencies into image — users don't need a git clone
 COPY cms/     /var/www/cms/
 COPY vendor/  /var/www/vendor/
+COPY bin/     /var/www/bin/
+COPY public/  /var/www/public/
 COPY docker/cms.conf     /etc/apache2/sites-available/cms.conf
 COPY docker/preview.conf /etc/apache2/sites-available/preview.conf
 RUN a2ensite cms.conf && a2dissite 000-default.conf
