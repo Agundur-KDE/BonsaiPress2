@@ -42,7 +42,7 @@ That's it.
 ## Quick start
 
 ```bash
-git clone --recurse-submodules https://github.com/Agundur-KDE/BonsaiPress2.git
+git clone --recursive --shallow-submodules https://github.com/Agundur-KDE/BonsaiPress2.git
 cd BonsaiPress2
 ./bonsai install    # makes 'bonsai' available system-wide (once)
 bonsai start        # pulls images, starts Docker — demo on :8080
@@ -64,7 +64,7 @@ Open [http://localhost:8080](http://localhost:8080).
 2. **Install Git** if you don't have it already.
 3. **Clone the repo:**
    ```bash
-   git clone --recurse-submodules https://github.com/Agundur-KDE/BonsaiPress2.git
+   git clone --recursive --shallow-submodules https://github.com/Agundur-KDE/BonsaiPress2.git
    cd BonsaiPress2
    ```
 4. **Register the `bonsai` CLI on your PATH:**

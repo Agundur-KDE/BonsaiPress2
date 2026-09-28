@@ -78,7 +78,7 @@ _is_legacy_official_template() {
 _ensure_submodules() {
     # Source archives have .gitmodules sometimes, but never a usable .git repo.
     [[ -e "$SCRIPT_DIR/.git" && -f "$SCRIPT_DIR/.gitmodules" ]] || return 0
-    git -C "$SCRIPT_DIR" submodule update --init --recursive --quiet || {
+    git -C "$SCRIPT_DIR" submodule update --init --recursive --depth 1 --quiet || {
         err "Could not initialize Git submodules."
         return 1
     }
@@ -669,6 +669,7 @@ install_cmd() {
 
     for dir in "$HOME/.local/bin" "$HOME/bin"; do
         if [[ ":$PATH:" == *":$dir:"* ]]; then
+            mkdir -p "$dir"
             target="$dir/bonsai"
             break
         fi
