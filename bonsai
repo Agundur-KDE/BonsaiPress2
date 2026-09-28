@@ -530,10 +530,15 @@ new_cmd() {
     local config_file="$BONSAI_CONFIG/config"
     local template_url="$DEFAULT_TEMPLATE"
     [[ -f "$config_file" ]] && template_url=$(grep "^BONSAI_TEMPLATE=" "$config_file" | cut -d= -f2-)
-    # Migrate the old documented SSH URL transparently for existing users.
-    if [[ -z "$template_url" || "$template_url" == "git@github.com:Agundur-KDE/emptyContent.git" ]]; then
-        template_url="$DEFAULT_TEMPLATE"
-    fi
+    # Migrate old documented SSH URLs and the original placeholder
+    # transparently for existing users. The official starter must never
+    # require a user's GitHub SSH key.
+    local template_without_suffix="${template_url%.git}"
+    case "$template_without_suffix" in
+        ""|"git@github.com:Agundur-KDE/emptyContent"|"ssh://git@github.com/Agundur-KDE/emptyContent"|"git@github.com:user/bonsai-template")
+            template_url="$DEFAULT_TEMPLATE"
+            ;;
+    esac
 
     # Template klonen, Git-History entfernen
     info "Cloning template..."
