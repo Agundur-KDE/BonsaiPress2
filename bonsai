@@ -575,6 +575,13 @@ new_cmd() {
         ok "Added starter Sass: config/sass/main.scss"
     fi
 
+    local starter_bootstrap_version="$SCRIPT_DIR/templates/client/config/bootstrap-version.txt"
+    if [[ ! -f "$client_dir/config/bootstrap-version.txt" && -f "$starter_bootstrap_version" ]]; then
+        mkdir -p "$client_dir/config"
+        cp "$starter_bootstrap_version" "$client_dir/config/bootstrap-version.txt"
+        ok "Added Bootstrap version: config/bootstrap-version.txt"
+    fi
+
     git -C "$client_dir" init
     ok "Git initialized."
 

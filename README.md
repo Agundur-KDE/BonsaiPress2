@@ -91,8 +91,9 @@ Open [http://localhost:8080](http://localhost:8080).
    ```bash
    bonsai new myclient
    ```
-   If the template does not provide one, Bonsai adds a Bootstrap Sass starter
-   at `config/sass/main.scss`, so a fresh client is ready for `bonsai static`.
+   If the template does not provide them, Bonsai adds the Bootstrap Sass starter
+   and `config/bootstrap-version.txt`, so a fresh client is ready for
+   `bonsai static` and Bootstrap version switching.
    Fill in `current/config/bonsai_config.php` with FTP credentials before deploying.
 
 ### Troubleshooting
