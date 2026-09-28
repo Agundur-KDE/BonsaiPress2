@@ -67,7 +67,12 @@ Open [http://localhost:8080](http://localhost:8080).
    ```bash
    ./bonsai install
    ```
-   This symlinks `bonsai` into `~/.local/bin` or `~/bin` — whichever is already on your `PATH`. If neither is, the command tells you and prints the manual symlink command to run instead.
+   This creates the default `~/.config/bonsai/config` with the public HTTPS
+   starter template and symlinks `bonsai` into `~/.local/bin` or `~/bin` —
+   whichever is already on your `PATH`. Existing legacy SSH configuration for
+   the official template is migrated automatically. If neither directory is on
+   your `PATH`, the command tells you and prints the manual symlink command to
+   run instead.
 5. **(Optional) Sanity-check your environment** before starting — catches Docker permission/proxy/port issues upfront:
    ```bash
    ./setup_test.sh

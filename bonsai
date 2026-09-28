@@ -63,6 +63,18 @@ _get_git_url() {
     grep "^${1} " "$PROJECTS_FILE" | awk '{print $2}'
 }
 
+_is_legacy_official_template() {
+    local template_url="${1%.git}"
+    case "$template_url" in
+        "git@github.com:Agundur-KDE/emptyContent"|"ssh://git@github.com/Agundur-KDE/emptyContent"|"git@github.com:user/bonsai-template")
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # --- Docker helpers ---
 
 check_docker() {
@@ -533,12 +545,9 @@ new_cmd() {
     # Migrate old documented SSH URLs and the original placeholder
     # transparently for existing users. The official starter must never
     # require a user's GitHub SSH key.
-    local template_without_suffix="${template_url%.git}"
-    case "$template_without_suffix" in
-        ""|"git@github.com:Agundur-KDE/emptyContent"|"ssh://git@github.com/Agundur-KDE/emptyContent"|"git@github.com:user/bonsai-template")
-            template_url="$DEFAULT_TEMPLATE"
-            ;;
-    esac
+    if [[ -z "$template_url" ]] || _is_legacy_official_template "$template_url"; then
+        template_url="$DEFAULT_TEMPLATE"
+    fi
 
     # Template klonen, Git-History entfernen
     info "Cloning template..."
@@ -611,8 +620,24 @@ new_cmd() {
 # --- Install ---
 
 install_cmd() {
-    local target="" self
+    local target="" self config_file configured_template
     self="$(realpath "${BASH_SOURCE[0]}")"
+
+    mkdir -p "$BONSAI_CONFIG"
+    config_file="$BONSAI_CONFIG/config"
+    if [[ ! -f "$config_file" ]]; then
+        printf 'BONSAI_TEMPLATE=%s\n' "$DEFAULT_TEMPLATE" > "$config_file"
+        ok "Created: $config_file"
+    else
+        configured_template=$(grep "^BONSAI_TEMPLATE=" "$config_file" | cut -d= -f2-)
+        if [[ -n "$configured_template" ]] && _is_legacy_official_template "$configured_template"; then
+            sed -i "s|^BONSAI_TEMPLATE=.*|BONSAI_TEMPLATE=$DEFAULT_TEMPLATE|" "$config_file"
+            ok "Updated template: $config_file"
+        elif ! grep -q "^BONSAI_TEMPLATE=" "$config_file"; then
+            printf 'BONSAI_TEMPLATE=%s\n' "$DEFAULT_TEMPLATE" >> "$config_file"
+            ok "Added template: $config_file"
+        fi
+    fi
 
     for dir in "$HOME/.local/bin" "$HOME/bin"; do
         if [[ ":$PATH:" == *":$dir:"* ]]; then
