@@ -7,6 +7,8 @@
 
 set -uo pipefail
 
+ISSUES=0
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
@@ -38,11 +40,13 @@ if docker info >/dev/null 2>&1; then
 else
     if sudo -n docker info >/dev/null 2>&1 || { command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; }; then
         fail "docker daemon reachable only with sudo — current user lacks permission"
+        ISSUES=1
         hint "sudo usermod -aG docker \$USER"
         hint "then log out and back in completely (a new terminal alone is not enough)"
         hint "quick test without re-login: newgrp docker"
     else
         fail "docker daemon not reachable at all"
+        ISSUES=1
         hint "start it: Docker Desktop, or on Linux 'sudo systemctl start docker'"
         hint "check with: sudo systemctl status docker"
     fi
@@ -57,6 +61,7 @@ if docker compose version >/dev/null 2>&1; then
     ok "docker compose plugin found ($(docker compose version --short 2>/dev/null || echo "version unknown"))"
 else
     fail "docker compose (v2 plugin) not found or broken"
+    ISSUES=1
     hint "Debian/Ubuntu: sudo apt update && sudo apt install docker-compose-plugin"
     hint "if that package isn't available, install manually — no PPA needed:"
     hint "  mkdir -p ~/.docker/cli-plugins/"
@@ -96,6 +101,7 @@ if command -v git >/dev/null 2>&1; then
     ok "git found ($(command -v git))"
 else
     fail "git not installed"
+    ISSUES=1
     hint "install git via your distro's package manager"
 fi
 
@@ -106,6 +112,7 @@ echo
 for port in 8080 8081 8001; do
     if command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | grep -q ":${port} "; then
         fail "port $port already in use"
+        ISSUES=1
         hint "run 'bonsai status' first — this may just be BonsaiPress already running"
         hint "otherwise stop whatever holds it, or remap the port in compose.yml"
     else
@@ -115,3 +122,7 @@ done
 
 echo
 echo "Done."
+
+if [[ "$ISSUES" -ne 0 ]]; then
+    exit 1
+fi
