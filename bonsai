@@ -554,6 +554,17 @@ new_cmd() {
     git clone "$template_url" "$client_dir" || { err "Clone failed."; exit 1; }
     git -C "$client_dir" submodule update --init --recursive --quiet
     rm -rf "$client_dir/.git"
+
+    # Keep fresh clients compatible with `bonsai static`. Preserve a template's
+    # own Sass entrypoint, but provide the standard Bootstrap starter when it is
+    # absent from a minimal template such as emptyContent.
+    local starter_sass="$SCRIPT_DIR/templates/client/config/sass/main.scss"
+    if [[ ! -f "$client_dir/config/sass/main.scss" && -f "$starter_sass" ]]; then
+        mkdir -p "$client_dir/config/sass"
+        cp "$starter_sass" "$client_dir/config/sass/main.scss"
+        ok "Added starter Sass: config/sass/main.scss"
+    fi
+
     git -C "$client_dir" init
     ok "Git initialized."
 
