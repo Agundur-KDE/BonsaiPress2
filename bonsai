@@ -10,9 +10,9 @@ DEMO_REPO="https://github.com/Agundur-KDE/DEMO.git"
 # Keep this on HTTPS so creating a project never requires a GitHub SSH key.
 DEFAULT_TEMPLATE="https://github.com/Agundur-KDE/emptyContent.git"
 
-# Dev mode: cms/ exists locally (git clone) — use compose.dev.yml with local build
-# Standalone mode: cms/ is baked into the Docker image — use compose.yml (slim)
-if [[ -d "$SCRIPT_DIR/cms" ]]; then
+# Dev mode: the CMS submodule is checked out — use compose.dev.yml with local build
+# Standalone mode: CMS and Bootstrap are baked into the Docker image — use compose.yml
+if [[ -d "$SCRIPT_DIR/cms/bootstrap/scss" ]]; then
     COMPOSE_FILE="$SCRIPT_DIR/compose.dev.yml"
 else
     COMPOSE_FILE="$SCRIPT_DIR/compose.yml"
@@ -73,6 +73,15 @@ _is_legacy_official_template() {
             return 1
             ;;
     esac
+}
+
+_ensure_submodules() {
+    # Source archives have .gitmodules sometimes, but never a usable .git repo.
+    [[ -e "$SCRIPT_DIR/.git" && -f "$SCRIPT_DIR/.gitmodules" ]] || return 0
+    git -C "$SCRIPT_DIR" submodule update --init --recursive --quiet || {
+        err "Could not initialize Git submodules."
+        return 1
+    }
 }
 
 # --- Docker helpers ---
@@ -192,6 +201,7 @@ _ensure_demo() {
 
 start() {
     check_docker
+    _ensure_submodules || exit 1
     _ensure_demo
 
     if is_running; then
