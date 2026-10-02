@@ -8,6 +8,8 @@ class StaticExporter
 {
     private string $staticDir;
     private string $contentPath;
+    /** @var string[] */
+    private array $ignorePatterns;
 
     public function __construct(
         private PageRenderer $renderer,
@@ -19,6 +21,7 @@ class StaticExporter
     ) {
         $this->staticDir   = $basePath . '/current/static';
         $this->contentPath = $basePath . '/current/config/' . $lang . '/contenfiles';
+        $this->ignorePatterns = $this->loadIgnorePatterns($basePath . '/current/.bonsaiignore');
     }
 
     public function export(): \Generator
@@ -179,9 +182,13 @@ class StaticExporter
                 continue;
             }
 
+            if ($this->isIgnoredPath($item)) {
+                continue;
+            }
+
             if (is_dir($path)) {
                 // BonsaiPress owns all subdirs — delete entirely so removed pages leave no trace
-                $this->deleteDir($path);
+                $this->deleteDir($path, $item);
             } elseif ($item === 'index.html' || $item === 'sitemap.xml' || $item === 'llms-full.txt') {
                 // Only these root-level files are BonsaiPress-generated
                 unlink($path);
@@ -190,7 +197,7 @@ class StaticExporter
         }
     }
 
-    private function deleteDir(string $dir): void
+    private function deleteDir(string $dir, string $relativeDir): void
     {
         foreach (scandir($dir) as $item) {
             if ($item === '.' || $item === '..') {
@@ -200,8 +207,60 @@ class StaticExporter
             if (is_link($path)) {
                 continue;
             }
-            is_dir($path) ? $this->deleteDir($path) : unlink($path);
+            $relativePath = $relativeDir . '/' . $item;
+            if ($this->isIgnoredPath($relativePath)) {
+                continue;
+            }
+            is_dir($path) ? $this->deleteDir($path, $relativePath) : unlink($path);
+        }
+        if (count(scandir($dir)) > 2) {
+            return;
         }
         rmdir($dir);
+    }
+
+    /** @return string[] */
+    private function loadIgnorePatterns(string $path): array
+    {
+        if (!is_file($path)) {
+            return [];
+        }
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES);
+        if ($lines === false) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', $lines),
+            fn(string $line): bool => $line !== '' && !str_starts_with($line, '#')
+        ));
+    }
+
+    private function isIgnoredPath(string $relativePath): bool
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+        $filename = basename(rtrim($relativePath, '/'));
+
+        foreach ($this->ignorePatterns as $pattern) {
+            $pattern = ltrim(str_replace('\\', '/', $pattern), '/');
+            if ($pattern === '') {
+                continue;
+            }
+
+            if (str_ends_with($pattern, '/')) {
+                $directory = rtrim($pattern, '/');
+                if ($relativePath === $directory || str_starts_with($relativePath, $directory . '/')) {
+                    return true;
+                }
+                continue;
+            }
+
+            if (fnmatch($pattern, $relativePath) || fnmatch($pattern, $filename)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
