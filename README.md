@@ -166,6 +166,26 @@ bonsai static     # regenerate static HTML
 ```
 Then check the **preview** on `:8081`, not `:8080` (`:8080` serves the live CMS, `:8081` serves the static build).
 
+**Bootstrap version changes after starting Docker**
+In source checkouts, `bonsai start` restores the version from
+`current/config/bootstrap-version.txt` after initializing Git submodules.
+`bonsai static` and `bonsai switch` also select that version. Missing tags are
+fetched from the Bootstrap remote; an unavailable version or local Bootstrap
+edits abort the command instead of silently compiling with different sources.
+Standalone archives continue to use the Bootstrap sources baked into the image.
+
+**PHP2Shell security update (21 October 2026)**
+The Dockerfile uses PHP 8.4.27, which fixes CVE-2026-109618 and
+CVE-2026-109619. Existing containers must be recreated with an updated image;
+restarting an old container keeps its old PHP version. For a source checkout:
+```bash
+docker compose -f compose.dev.yml build --pull cms
+docker compose -f compose.dev.yml up -d --no-deps cms preview
+docker compose -f compose.dev.yml exec -T cms php -v
+docker compose -f compose.dev.yml exec -T preview php -v
+```
+This updates the local environment. PHP on the production host is managed separately.
+
 **`bonsai deploy` fails with an FTP/connection error**
 Check `current/config/bonsai_config.php` for correct host/user/password. BonsaiPress uses explicit FTPS on port 21 — make sure your hosting firewall allows it and that you're not behind a proxy blocking outbound FTP.
 

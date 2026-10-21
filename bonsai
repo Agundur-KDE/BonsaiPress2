@@ -78,10 +78,50 @@ _is_legacy_official_template() {
 _ensure_submodules() {
     # Source archives have .gitmodules sometimes, but never a usable .git repo.
     [[ -e "$SCRIPT_DIR/.git" && -f "$SCRIPT_DIR/.gitmodules" ]] || return 0
+    if [[ -e "$SCRIPT_DIR/cms/bootstrap/.git" ]] &&
+       [[ -n "$(git -C "$SCRIPT_DIR/cms/bootstrap" status --porcelain --untracked-files=no)" ]]; then
+        err "Bootstrap has local changes — commit or stash them before initializing submodules."
+        return 1
+    fi
     git -C "$SCRIPT_DIR" submodule update --init --recursive --depth 1 --quiet || {
         err "Could not initialize Git submodules."
         return 1
     }
+}
+
+_ensure_project_bootstrap() {
+    # Standalone images carry Bootstrap internally; there is no host checkout.
+    [[ -d "$SCRIPT_DIR/cms/bootstrap/scss" ]] || return 0
+    local version_file="$SCRIPT_DIR/current/config/bootstrap-version.txt"
+    [[ -f "$version_file" ]] || return 0
+    local version target current
+    version=$(tr -d '"[:space:]' < "$version_file")
+    if [[ -z "$version" ]] || ! git check-ref-format "refs/tags/$version"; then
+        err "Invalid Bootstrap version in current/config/bootstrap-version.txt."
+        return 1
+    fi
+    target=$(git -C "$SCRIPT_DIR/cms/bootstrap" rev-parse --verify "refs/tags/$version^{commit}" 2>/dev/null)
+    if [[ -z "$target" ]]; then
+        # Shallow submodule clones may only contain the pinned default tag.
+        info "Fetching Bootstrap $version..."
+        git -C "$SCRIPT_DIR/cms/bootstrap" fetch --depth 1 origin "refs/tags/$version:refs/tags/$version" || {
+            err "Bootstrap $version unavailable — refusing to use another version."
+            return 1
+        }
+        target=$(git -C "$SCRIPT_DIR/cms/bootstrap" rev-parse --verify "refs/tags/$version^{commit}") || return 1
+    fi
+    current=$(git -C "$SCRIPT_DIR/cms/bootstrap" rev-parse HEAD) || return 1
+    if [[ -n "$(git -C "$SCRIPT_DIR/cms/bootstrap" status --porcelain --untracked-files=no)" ]]; then
+        err "Bootstrap has local changes — commit or stash them before building."
+        return 1
+    fi
+    [[ "$current" == "$target" ]] && return 0
+    info "Bootstrap: selecting project version $version..."
+    git -C "$SCRIPT_DIR/cms/bootstrap" checkout --detach --quiet "$target" || {
+        err "Could not select Bootstrap $version."
+        return 1
+    }
+    ok "Bootstrap $version active."
 }
 
 _ensure_client_defaults() {
@@ -222,6 +262,7 @@ start() {
     check_docker
     _ensure_submodules || exit 1
     _ensure_demo
+    _ensure_project_bootstrap || exit 1
 
     if is_running; then
         ok "BonsaiPress is already running."
@@ -396,6 +437,7 @@ switch_cmd() {
     active="$(_get_active)"
 
     if [[ "$name" == "$active" && -L "$SCRIPT_DIR/current" ]]; then
+        _ensure_project_bootstrap || exit 1
         ok "Project '$name' is already active."
         return
     fi
@@ -476,20 +518,7 @@ switch_cmd() {
     ln -sfn "clients/$name" "$SCRIPT_DIR/current"
     _set_active "$name"
 
-    # Bootstrap-Version aus Projekt auschecken
-    local bs_version_file="$SCRIPT_DIR/current/config/bootstrap-version.txt"
-    if [[ -f "$bs_version_file" ]]; then
-        local bs_version
-        bs_version=$(tr -d '"' < "$bs_version_file" | tr -d '[:space:]')
-        if [[ -n "$bs_version" ]]; then
-            info "Bootstrap: checking out $bs_version..."
-            if git -C "$SCRIPT_DIR/cms/bootstrap" checkout "$bs_version" --quiet 2>/dev/null; then
-                ok "Bootstrap $bs_version active."
-            else
-                warn "Bootstrap version '$bs_version' not found — staying on current version."
-            fi
-        fi
-    fi
+    _ensure_project_bootstrap || exit 1
 
     _restart_if_running
 
@@ -763,6 +792,7 @@ case "${1:-help}" in
     remove)         shift; remove_cmd "$@" ;;
     static)
         shift
+        _ensure_project_bootstrap || exit 1
         if [[ ! -f "$SCRIPT_DIR/current/config/sass/main.scss" ]]; then
             err "Missing current/config/sass/main.scss — cannot build static CSS."
             exit 1

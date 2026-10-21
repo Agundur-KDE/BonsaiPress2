@@ -1,4 +1,5 @@
-FROM php:8.4-apache
+# PHP2Shell fixes (CVE-2026-109618 / CVE-2026-109619).
+FROM php:8.4.27-apache
 
 RUN a2enmod rewrite && rm -rf /var/www/html
 
