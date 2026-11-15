@@ -186,6 +186,26 @@ docker compose -f compose.dev.yml exec -T preview php -v
 ```
 This updates the local environment. PHP on the production host is managed separately.
 
+**Container security update (15 November 2026, v2.0.11)**
+
+Both images upgrade inherited Debian packages during builds, including Apache,
+zlib, APT and Brotli security fixes where installed. The watcher uses Python
+3.12.16, pip 26.2 and websockets 17.4 (GHSA-6m5v-9gmr-5665). Dart Sass remains
+at 1.77.8; no SCSS migration is required. Publication always pulls base images.
+
+For published installations, run `bonsai update` to pull the images (running
+containers are recreated); use `bonsai start` if the stack was stopped.
+For source checkouts, first pull the release changes, then run:
+
+```bash
+docker compose -f compose.dev.yml build --pull --no-cache cms watcher
+docker compose -f compose.dev.yml up -d --no-deps cms preview watcher
+```
+
+The fixed Apache package is `2.4.71-1~deb13u1` or newer on Debian 13.
+These images are the local CMS/build environment; production hosting is managed
+separately.
+
 **`bonsai deploy` fails with an FTP/connection error**
 Check `current/config/bonsai_config.php` for correct host/user/password. BonsaiPress uses explicit FTPS on port 21 — make sure your hosting firewall allows it and that you're not behind a proxy blocking outbound FTP.
 

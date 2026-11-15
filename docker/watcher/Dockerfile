@@ -1,14 +1,17 @@
-FROM python:3.12-slim
+FROM python:3.12.16-slim
 
 # dart-sass binary
-RUN apt-get update && apt-get install -y curl unzip && \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y curl unzip && \
     SASS_VERSION=1.77.8 && \
     curl -sL "https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz" \
     | tar -xz -C /usr/local && \
     ln -s /usr/local/dart-sass/sass /usr/local/bin/sass && \
     apt-get remove -y curl unzip && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir watchdog websockets
+# Upgrade the installer before it downloads packages; keep audited versions explicit.
+RUN pip install --no-cache-dir --upgrade pip==26.2
+COPY docker/watcher/requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
 
 WORKDIR /var/www
 

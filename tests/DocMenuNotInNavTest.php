@@ -37,10 +37,10 @@ class DocMenuNotInNavTest extends TestCase
             $this->basePath . '/cms/addons/doc-menu.php'
         );
 
-        // Real nav template — copied for the same reason (section-boundary
-        // fidelity matters here, not worth hand-rolling a second copy).
+        // Keep the section contract in a tracked fixture: the active client
+        // may have no doc-menu template and is absent in clean CI checkouts.
         copy(
-            dirname(__DIR__) . '/current/config/de/templates/doc-menu.html',
+            __DIR__ . '/fixtures/doc-menu.html',
             $de . '/templates/doc-menu.html'
         );
 

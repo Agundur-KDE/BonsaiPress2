@@ -51,6 +51,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          pull: true
           push: true
           tags: ${{ steps.meta-cms.outputs.tags }}
 
@@ -59,5 +60,6 @@ jobs:
         with:
           context: .
           file: docker/watcher/Dockerfile
+          pull: true
           push: true
           tags: ${{ steps.meta-watcher.outputs.tags }}

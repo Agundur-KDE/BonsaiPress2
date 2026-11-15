@@ -1,0 +1,3 @@
+watchdog==6.0.0
+# GHSA-6m5v-9gmr-5665: bound buffering of empty message fragments.
+websockets==17.4
