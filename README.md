@@ -174,9 +174,14 @@ fetched from the Bootstrap remote; an unavailable version or local Bootstrap
 edits abort the command instead of silently compiling with different sources.
 Standalone archives continue to use the Bootstrap sources baked into the image.
 
-**PHP2Shell security update (21 October 2026)**
-The Dockerfile uses PHP 8.4.27, which fixes CVE-2026-109618 and
-CVE-2026-109619. Existing containers must be recreated with an updated image;
+**PHP security update (21 November 2026)**
+The Dockerfile uses [PHP 8.4.28](https://www.php.net/ChangeLog-8.php#8.4.28),
+released on 19 November 2026 with security fixes, including remote code execution
+fixes in backtraces, timezone handling and sessions. This supersedes the
+PHP 8.4.27 update for CVE-2026-109618 and CVE-2026-109619.
+CMS and Preview share this PHP image; the Python watcher contains no PHP.
+Updating the host's PHP CLI does not update the containers.
+Existing containers must be recreated with an updated image;
 restarting an old container keeps its old PHP version. For a source checkout:
 ```bash
 docker compose -f compose.dev.yml build --pull cms
@@ -184,6 +189,9 @@ docker compose -f compose.dev.yml up -d --no-deps cms preview
 docker compose -f compose.dev.yml exec -T cms php -v
 docker compose -f compose.dev.yml exec -T preview php -v
 ```
+Both version checks must report PHP 8.4.28 or newer within the 8.4 series.
+For published installations, the updated CMS image must first be published to
+GHCR; then run `bonsai update` and, if the stack was stopped, `bonsai start`.
 This updates the local environment. PHP on the production host is managed separately.
 
 **Container security update (15 November 2026, v2.0.11)**
