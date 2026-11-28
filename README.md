@@ -45,6 +45,7 @@ That's it.
 git clone --recursive --shallow-submodules https://github.com/Agundur-KDE/BonsaiPress2.git
 cd BonsaiPress2
 ./bonsai install    # makes 'bonsai' available system-wide (once)
+eval "$(./bonsai shell-init)"  # activate in this terminal (Bash/Zsh)
 bonsai start        # pulls images, starts Docker — demo on :8080
 ```
 
@@ -77,6 +78,13 @@ Open [http://localhost:8080](http://localhost:8080).
    the official template is migrated automatically. If neither directory is on
    your `PATH`, the command tells you and prints the manual symlink command to
    run instead.
+   The installer also adds the project-switch integration to your Bash/Zsh
+   startup file. Activate it in the current terminal:
+   ```bash
+   eval "$(./bonsai shell-init)"
+   ```
+   New terminals load it automatically. This is needed because a CLI subprocess
+   cannot change the working directory of its parent shell.
 5. **(Optional) Sanity-check your environment** before starting — catches Docker permission/proxy/port issues upfront:
    ```bash
    ./setup_test.sh
@@ -247,6 +255,45 @@ bonsai static                  # Generate static HTML into current/static/
 bonsai deploy                  # Upload only changed files via FTPS
 bonsai deploy -d               # Dry-run: show diff without uploading
 ```
+
+## Apache security verification (28 November 2026)
+
+The published CMS/Preview `latest` image was checked against
+[CVE-2026-119618](https://security-tracker.debian.org/tracker/CVE-2026-119618).
+It contains Debian's fixed `apache2` package `2.4.71-1~deb13u1`; HTTP/2 is
+also not enabled. Existing installations still need `bonsai update` to pull
+the current image and recreate running containers, followed by `bonsai start`
+if the stack was stopped. An old local image is not updated by restarting it.
+
+## Shell integration and upgrading existing installations
+
+`bonsai install` also enables Bash/Zsh integration. Open a new terminal after
+installing, or run `eval "$(bonsai shell-init)"` in an existing shell. After a
+project switch, a shell inside `current/` re-enters that logical path so Git
+commands and the prompt use the selected project immediately. Subdirectories
+are preserved when present; otherwise the shell returns to `current/`.
+Shells outside `current/` keep their working directory. The prompt hook also
+handles `./bonsai switch` and switches made in another terminal.
+
+Existing Git installations must update the CLI and run the installer again:
+
+```bash
+cd /path/to/BonsaiPress2
+git pull --ff-only
+./bonsai install
+eval "$(./bonsai shell-init)"
+```
+
+For release archives, extract the complete new release (including `shell/`)
+into your installation, preserving `clients/` and `current/`, then run the same
+install and activation commands. Re-running the installer preserves existing
+shell settings and does not duplicate its initialization line.
+
+`bonsai update` updates Docker images only; it does not download CLI or shell
+files. Rebuilding the Docker image alone cannot deliver this CLI fix.
+Automatic integration supports Bash and Zsh. In other shells, re-enter
+`current/` after switching; Bonsai prints the required `cd` command when it
+detects a stale directory without active integration.
 
 ## Project structure
 

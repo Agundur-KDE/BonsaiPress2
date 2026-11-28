@@ -417,6 +417,22 @@ list_cmd() {
     done < "$PROJECTS_FILE"
 }
 
+_shell_switch_notice() {
+    [[ ${BONSAI_SHELL_ROOT:-} == "$SCRIPT_DIR" ]] && return 0
+    case "$PWD/" in
+        "$SCRIPT_DIR/current/"*)
+            if [[ ! . -ef "$PWD" ]]; then
+                warn "This shell still points to the previous project."
+                echo "  Bash/Zsh: run 'bonsai install', then activate in this terminal:"
+                printf '  eval "$(%q shell-init)"\n' "$SCRIPT_DIR/bonsai"
+                echo "  Other shells: re-enter the selected project before running Git:"
+                printf '  cd %q\n' "$SCRIPT_DIR/current"
+            fi
+            ;;
+    esac
+    return 0
+}
+
 switch_cmd() {
     local name="${1:-}"
     _config_init
@@ -439,6 +455,7 @@ switch_cmd() {
     if [[ "$name" == "$active" && -L "$SCRIPT_DIR/current" ]]; then
         _ensure_project_bootstrap || exit 1
         ok "Project '$name' is already active."
+        _shell_switch_notice
         return
     fi
 
@@ -518,6 +535,7 @@ switch_cmd() {
     ln -sfn "clients/$name" "$SCRIPT_DIR/current"
     _set_active "$name"
 
+    _shell_switch_notice
     _ensure_project_bootstrap || exit 1
 
     _restart_if_running
@@ -678,6 +696,12 @@ new_cmd() {
 
 # --- Install ---
 
+shell_init_cmd() {
+    printf '_BONSAI_ROOT=%q\n' "$SCRIPT_DIR"
+    printf '_BONSAI_CLI=%q\n' "$SCRIPT_DIR/bonsai"
+    cat "$SCRIPT_DIR/shell/init.sh"
+}
+
 install_cmd() {
     local target="" self config_file configured_template
     self="$(realpath "${BASH_SOURCE[0]}")"
@@ -715,12 +739,28 @@ install_cmd() {
     if [[ -L "$target" ]]; then
         ln -sf "$self" "$target"
         ok "Updated: $target"
-        return
+    else
+        ln -s "$self" "$target" || return 1
+        ok "Installed: $target"
     fi
 
-    ln -s "$self" "$target"
-    ok "Installed: $target"
+    local shell_rc init_line
+    case "${SHELL##*/}" in
+        bash) shell_rc="$HOME/.bashrc" ;;
+        zsh) shell_rc="${ZDOTDIR:-$HOME}/.zshrc" ;;
+        *)
+            warn "Automatic shell setup supports Bash and Zsh."
+            return
+            ;;
+    esac
+    printf -v init_line 'eval "$(%q shell-init)"' "$self"
+    if ! grep -Fqx -- "$init_line" "$shell_rc" 2>/dev/null; then
+        printf '\n# Bonsai: keep current/ and the shell Git context in sync.\n%s\n' "$init_line" >> "$shell_rc" || return 1
+        ok "Shell integration added: $shell_rc"
+    fi
     ok "You can now type 'bonsai' anywhere."
+    echo "  Open a new terminal, or load it now:"
+    echo "  $init_line"
 }
 
 # --- Help ---
@@ -748,6 +788,7 @@ help_cmd() {
     echo "  bonsai version                 Show version"
     echo "  bonsai update                  Update Docker images"
     echo "  bonsai install                 One-time: make 'bonsai' available everywhere"
+    echo "  bonsai shell-init              Print Bash/Zsh integration for eval"
     echo ""
 }
 
@@ -778,6 +819,7 @@ update_cmd() {
 # --- Router ---
 
 case "${1:-help}" in
+    shell-init)     shell_init_cmd ;;
     start)          start ;;
     stop)           stop ;;
     restart)        stop; start ;;
